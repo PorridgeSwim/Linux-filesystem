@@ -102,7 +102,11 @@ void pantryfs_free_inode(struct inode *inode)
 
 int pantryfs_fill_super(struct super_block *sb, void *data, int silent)
 {
-	return -EPERM;
+	struct pantryfs_superblock* superblock;
+	struct pantryfs_inode* inode;
+	struct pantry_fs_sb_buffer_heads* two_bufferheads;
+	// return -EPERM;
+	return 0;
 }
 
 static struct dentry *pantryfs_mount(struct file_system_type *fs_type, int flags,
