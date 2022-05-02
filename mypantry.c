@@ -103,6 +103,31 @@ void pantryfs_free_inode(struct inode *inode)
 int pantryfs_fill_super(struct super_block *sb, void *data, int silent)
 {
 	return -EPERM;
+	//struct pantryfs_super_block* pfs_sb;//superblock 
+	//struct pantryfs_inode* pfs_inode;//inodes inside this
+	struct pantryfs_sb_buffer_heads two_bufferheads;
+	struct buffer_head *sb_bh, *i_store_bh;
+	struct super_operations pfs_s_ops;
+	//char* inode_b_data, superblock_b_data; /* pointer to data within the page */
+	struct inode *root_inode;
+	struct dentry *root_dentry;
+	
+	sb_set_blocksize(sb, PFS_BLOCK_SIZE);
+	sb_bh = sb_bread(sb, 1);
+	two_bufferheads.sb_bh = sb_bh;
+	i_store_bh = sb_bread(sb, 2);
+	two_bufferheads.i_store_bh = i_store_bh;
+	sb->s_fs_info = (void *) &two_bufferheads;
+	sb->s_magic = PANTRYFS_MAGIC_NUMBER;
+	sb->s_op = &pfs_s_ops;
+	
+	root_inode = iget_locked(sb, 0);
+	root_inode->i_mode = S_IFDIR | 0777;
+	unlock_new_inode(root_inode);
+	root_dentry = d_obtain_root(root_inode);
+	sb->s_root = root_dentry;
+
+	return 0;
 }
 
 static struct dentry *pantryfs_mount(struct file_system_type *fs_type, int flags,
@@ -110,8 +135,10 @@ static struct dentry *pantryfs_mount(struct file_system_type *fs_type, int flags
 {
 	struct dentry *ret;
 
+	pr_info("before mount_bdev\n");
 	/* mount_bdev is "mount block device". */
 	ret = mount_bdev(fs_type, flags, dev_name, data, pantryfs_fill_super);
+	pr_info("after mount_bdev\n");
 
 	if (IS_ERR(ret))
 		pr_err("Error mounting mypantryfs");
