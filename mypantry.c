@@ -102,13 +102,13 @@ void pantryfs_free_inode(struct inode *inode)
 
 int pantryfs_fill_super(struct super_block *sb, void *data, int silent)
 {
-	return -EPERM;
+	//return -ENOMEM;
 	//struct pantryfs_super_block* pfs_sb;//superblock 
 	//struct pantryfs_inode* pfs_inode;//inodes inside this
 	struct pantryfs_sb_buffer_heads two_bufferheads;
 	struct buffer_head *sb_bh, *i_store_bh;
 	struct super_operations pfs_s_ops;
-	//char* inode_b_data, superblock_b_data; /* pointer to data within the page */
+	//char* inode_b_data, superblock_b_data; /* pointer to data within the page
 	struct inode *root_inode;
 	struct dentry *root_dentry;
 	
@@ -120,13 +120,19 @@ int pantryfs_fill_super(struct super_block *sb, void *data, int silent)
 	sb->s_fs_info = (void *) &two_bufferheads;
 	sb->s_magic = PANTRYFS_MAGIC_NUMBER;
 	sb->s_op = &pfs_s_ops;
-	
+
+	pr_info("before iget_locked\n");
+	//return -EPERM;	
 	root_inode = iget_locked(sb, 0);
 	root_inode->i_mode = S_IFDIR | 0777;
 	unlock_new_inode(root_inode);
+	pr_info("after iget_locked\n");
+	//return -EPERM;
 	root_dentry = d_obtain_root(root_inode);
+	return -EPERM;
 	sb->s_root = root_dentry;
 
+	return -EPERM;
 	return 0;
 }
 
