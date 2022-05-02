@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 	len = PFS_BLOCK_SIZE - 2 * sizeof(struct pantryfs_dir_entry);
 	ret = write(fd, zeroes, len);
 	passert(ret == len, "Pad to end of root dentries");
-	
+
 	// block 1 ends
 	strncpy(buf, hello_contents, sizeof(buf));
 	ret = write(fd, buf, sizeof(buf));
