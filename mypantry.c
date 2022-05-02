@@ -100,11 +100,38 @@ void pantryfs_free_inode(struct inode *inode)
 	free_inode_nonrcu(inode);
 }
 
-int pantryfs_fill_super(struct super_block *sb, void *data, int silent)
+int pantryfs_fill_super(struct super_block *sb, void *data, int silent)//what is data?
 {
-	struct pantryfs_superblock* superblock;
-	struct pantryfs_inode* inode;
-	struct pantry_fs_sb_buffer_heads* two_bufferheads;
+	// struct pantryfs_super_block* superblock;//superblock 
+	// struct pantryfs_inode* inode;//inodes inside this
+	struct pantryfs_sb_buffer_heads* two_bufferheads;
+	struct buffer_head *sb_bh, *i_store_bh;
+	struct inode *root_inode;
+	struct dentry *root_dentry;
+	// char* inode_b_data, superblock_b_data; /* pointer to data within the page */
+
+	two_bufferheads = kmalloc(sizeof(struct pantryfs_sb_buffer_heads), GFP_KERNEL);
+	sb_bh = sb_bread(sb, 1);
+	i_store_bh = sb_bread(sb, 2);
+	two_bufferheads -> sb_bh = sb_bh;//reads a specified block and returns the bh
+	two_bufferheads -> i_store_bh = i_store_bh;
+	/*sb defination*/
+
+	sb_set_blocksize(sb, PFS_BLOCK_SIZE);//1. set s_blocksize and s_blocksize_bits
+	sb->s_fs_info = (void *)two_bufferheads; //2.buffer head
+	sb->s_magic = PANTRYFS_MAGIC_NUMBER; //3.magic number
+	// i_store_bh//4.allocate inode bitmap?
+	sb->s_op = &pantryfs_sb_ops;//5. initialize op
+
+	root_inode = iget_locked(sb, 0); //5.invoke inode cache -- obtain an inode from a mounted file system
+	root_inode->i_mode = S_IFDIR | 0777;//inode or pantryfs inode?
+	root_inode->i_op = &pantryfs_inode_ops;
+	root_inode->i_fop = &pantryfs_dir_ops;
+	unlock_new_inode(root_inode);
+	root_dentry = d_obtain_root(root_inode);//5. allocate a dentry
+	sb->s_root = root_dentry;
+	//6. go through all inodes...
+	//7. not read only-- mark sb buffer dirty and set s_dirty
 	// return -EPERM;
 	return 0;
 }
