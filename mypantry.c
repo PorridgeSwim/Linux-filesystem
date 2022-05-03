@@ -90,7 +90,7 @@ ssize_t pantryfs_read(struct file *filp, char __user *buf, size_t len, loff_t *p
 
 loff_t pantryfs_llseek(struct file *filp, loff_t offset, int whence)
 {
-	return -EPERM;
+	return generic_file_llseek(filp, offset, whence);
 }
 
 int pantryfs_create(struct inode *parent, struct dentry *dentry, umode_t mode, bool excl)
@@ -179,7 +179,12 @@ retrieve:
 	if(child->i_state && I_NEW){
 		child->i_mode = pfs_child->mode;
 		child->i_op = &pantryfs_inode_ops;
-		child->i_fop = &pantryfs_dir_ops;
+		if(child->i_mode & S_IFDIR) {
+			child->i_fop = &pantryfs_dir_ops;
+		}
+		else{
+			child->i_fop = &pantryfs_file_ops;
+		}
 		child->i_private = (void *)(struct pantryfs_inode *) pfs_child;
 		child->i_ino = pfs_de->inode_no;
 		child->i_sb = parent->i_sb;
