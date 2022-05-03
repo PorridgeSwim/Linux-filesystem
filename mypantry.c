@@ -13,8 +13,54 @@
 
 int pantryfs_iterate(struct file *filp, struct dir_context *ctx)
 {
-	return -EPERM;
+	// return -EPERM;
+	struct buffer_head *tmp_bh, *i_store_bh;
+	struct pantryfs_dir_entry *pde;
+	unsigned int offset;
+	uint64_t block;
+	unsigned int pfs_dirent_size;
+	struct inode *dir = file_inode(filp);
+	struct pantryfs_inode *pfs_inode;
+
+	pfs_dirent_size = sizeof(struct pantryfs_dir_entry);
+	if(ctx->pos & (pfs_dirent_size - 1)) {
+		printk("Bad f_pos=%08lx for %s:%08lx\n",
+					(unsigned long)ctx->pos,
+					dir->i_sb->s_id, dir->i_ino);//not the right pos
+		return -EINVAL;
+	}
+	i_store_bh = ((struct pantryfs_sb_buffer_heads *)(dir->i_sb->s_fs_info))->i_store_bh;
+	pfs_inode = (struct pantryfs_inode* )(i_store_bh->b_data);
+	while(ctx->pos < dir->i_size){//iterate in dir's inodes
+		offset = ctx -> pos & (PFS_BLOCK_SIZE - 1);//pos & 111111111111
+		block = pfs_inode->data_block_number + (ctx -> pos >> 12);
+		tmp_bh = sb_bread(dir->i_sb, block);
+		if(!tmp_bh){
+			ctx->pos += PFS_BLOCK_SIZE - offset; //really?
+			continue;
+		}
+		do{
+			pde = (struct pantryfs_dir_entry *)(tmp_bh->b_data + offset);
+			if(pde -> inode_no) {
+				int size = strnlen(pde -> filename, PANTRYFS_FILENAME_BUF_SIZE);
+				if(!dir_emit(ctx, pde->filename, size,
+							le16_to_cpu(pde->inode_no),
+							DT_UNKNOWN)) {
+					brelse(tmp_bh);
+					return 0;
+				}
+			}
+			offset+= pfs_dirent_size;
+			ctx->pos += pfs_dirent_size;
+		}while ((offset < PFS_BLOCK_SIZE) && (ctx->pos < dir->i_size));
+		brelse(tmp_bh);
+	}
+
+	return 0;
 }
+// static inline bool dir_emit(struct dir_context *ctx,
+// 			    const char *name, int namelen,
+// 			    u64 ino, unsigned type)
 
 ssize_t pantryfs_read(struct file *filp, char __user *buf, size_t len, loff_t *ppos)
 {
@@ -129,9 +175,6 @@ int pantryfs_fill_super(struct super_block *sb, void *data, int silent)//what is
 	// i_store_bh//4.allocate inode bitmap?
 	sb->s_op = &pantryfs_sb_ops;//5. initialize op
 
-	brelse(sb_bh);
-	brelse(i_store_bh);
-
 	root_inode = iget_locked(sb, PANTRYFS_ROOT_INODE_NUMBER); //5.invoke inode cache
 	//-- obtain an inode from a mounted file system
 	if (!root_inode) {
@@ -142,6 +185,8 @@ int pantryfs_fill_super(struct super_block *sb, void *data, int silent)//what is
 	root_inode->i_mode = S_IFDIR | 0777;//inode or pantryfs inode?
 	root_inode->i_op = &pantryfs_inode_ops;
 	root_inode->i_fop = &pantryfs_dir_ops;
+	root_inode->i_private = i_store_bh->b_data;
+	root_inode->i_sb = sb;//?
 	unlock_new_inode(root_inode);
 	root_dentry = d_obtain_root(root_inode);//5. allocate a dentry
 	if (!root_dentry) {
@@ -153,6 +198,9 @@ int pantryfs_fill_super(struct super_block *sb, void *data, int silent)//what is
 	//6. go through all inodes...
 	//7. not read only-- mark sb buffer dirty and set s_dirty
 	// return -EPERM;
+	
+	brelse(sb_bh);
+	brelse(i_store_bh);
 	return 0;
 }
 
