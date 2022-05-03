@@ -72,7 +72,7 @@ ssize_t pantryfs_read(struct file *filp, char __user *buf, size_t len, loff_t *p
 	data_block_number = pfs_inode->data_block_number;
 	startptr = (sb_bread(i_node->i_sb, data_block_number))->b_data;
 	tmp_pos = *ppos;
-	brelse(i_store_bh);
+	// brelse(i_store_bh);
 
 	if (tmp_pos < 0)
 		return -EINVAL;
@@ -180,11 +180,13 @@ retrieve:
 		child->i_mode = pfs_child->mode;
 		child->i_op = &pantryfs_inode_ops;
 		if(child->i_mode & S_IFDIR) {
-			child->i_fop = &pantryfs_dir_ops;
+			child->i_fop = &pantryfs_dir_ops;	
 		}
 		else{
 			child->i_fop = &pantryfs_file_ops;
 		}
+		child->i_size = pfs_child->file_size;
+		pr_info("child isize: %lld\n", child->i_size);
 		child->i_private = (void *)(struct pantryfs_inode *) pfs_child;
 		child->i_ino = pfs_de->inode_no;
 		child->i_sb = parent->i_sb;
@@ -258,6 +260,7 @@ int pantryfs_fill_super(struct super_block *sb, void *data, int silent)//what is
 	sb_set_blocksize(sb, PFS_BLOCK_SIZE);//1. set s_blocksize and s_blocksize_bits
 	sb->s_fs_info = (void *)two_bufferheads; //2.buffer head
 	sb->s_magic = PANTRYFS_MAGIC_NUMBER; //3.magic number
+	sb->s_maxbytes = PFS_BLOCK_SIZE;
 	// i_store_bh//4.allocate inode bitmap?
 	sb->s_op = &pantryfs_sb_ops;//5. initialize op
 
@@ -273,6 +276,7 @@ int pantryfs_fill_super(struct super_block *sb, void *data, int silent)//what is
 	root_inode->i_fop = &pantryfs_dir_ops;
 	root_inode->i_private = i_store_bh->b_data;
 	root_inode->i_sb = sb;//?
+	root_inode->i_size = PFS_BLOCK_SIZE;
 	unlock_new_inode(root_inode);
 	root_dentry = d_obtain_root(root_inode);//5. allocate a dentry
 	if (!root_dentry) {
