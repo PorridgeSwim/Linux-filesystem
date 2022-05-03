@@ -10,10 +10,9 @@
 #include "pantryfs_file_ops.h"
 #include "pantryfs_sb.h"
 #include "pantryfs_sb_ops.h"
-
+/*
 int pantryfs_iterate(struct file *filp, struct dir_context *ctx)
 {
-	// return -EPERM;
 	struct buffer_head *tmp_bh, *i_store_bh;
 	struct pantryfs_dir_entry *pde;
 	unsigned int offset;
@@ -36,7 +35,7 @@ int pantryfs_iterate(struct file *filp, struct dir_context *ctx)
 		block = pfs_inode->data_block_number + (ctx -> pos >> 12);
 		tmp_bh = sb_bread(dir->i_sb, block);
 		if(!tmp_bh){
-			ctx->pos += PFS_BLOCK_SIZE - offset; //really?
+			ctx->pos += PFS_BLOCK_SIZE - offset; 
 			continue;
 		}
 		do{
@@ -58,6 +57,56 @@ int pantryfs_iterate(struct file *filp, struct dir_context *ctx)
 
 	return 0;
 }
+*/
+int pantryfs_iterate(struct file *filp, struct dir_context *ctx)
+{
+	// return -EPERM;
+	// bool moved = false;//moved needed?
+	struct buffer_head *tmp_bh, *i_store_bh;
+	struct pantryfs_dir_entry *pde;
+	struct pantryfs_inode *pfs_inode;
+	uint64_t data_block_number;
+	struct pantryfs_dir_entry *start;
+	struct inode *i_node;
+	unsigned long i_ino;
+
+	i_node = file_inode(filp);
+	i_ino = i_node->i_ino;//maximum of pos
+	i_store_bh = ((struct pantryfs_sb_buffer_heads *)(i_node->i_sb->s_fs_info))->i_store_bh;
+	pfs_inode = (struct pantryfs_inode* )(i_store_bh->b_data) + (le64_to_cpu(i_ino)-1); //* sizeof(struct pantryfs_inode));
+	data_block_number = pfs_inode->data_block_number;
+
+	tmp_bh = sb_bread(i_node->i_sb, data_block_number);//get the block
+	start = (struct pantryfs_dir_entry *)tmp_bh->b_data;
+	if (!dir_emit_dots(filp, ctx))
+		return 0;
+	pr_info("1ctx pos is: %lld\n", ctx->pos);
+	while(ctx->pos < PFS_MAX_CHILDREN) {
+		pde = start + ctx->pos;
+		pr_info("ctx pos is: %lld\n", ctx->pos);
+		if(pde == NULL)
+			break;
+		if(pde->active == 1){
+			int size = strnlen(pde -> filename, PANTRYFS_MAX_FILENAME_LENGTH);
+			if(!dir_emit(ctx, pde->filename, size,
+						le64_to_cpu(pde->inode_no),
+						DT_UNKNOWN)) {
+				return 0;
+			}	
+		}
+		ctx->pos++;
+	}
+	// while ((next = next_positive(dentry, p, 1)) != NULL) {
+	// 	if (!dir_emit(ctx, next->d_name.name, next->d_name.len,
+	// 		      d_inode(next)->i_ino, dt_type(d_inode(next))))
+	// 		break;
+	// 	moved = true;
+	// 	p = &next->d_child;
+	// 	ctx->pos++;
+	// }
+	return 0;
+}
+
 // static inline bool dir_emit(struct dir_context *ctx,
 // 			    const char *name, int namelen,
 // 			    u64 ino, unsigned type)
