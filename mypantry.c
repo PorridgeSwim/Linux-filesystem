@@ -123,6 +123,7 @@ struct dentry *pantryfs_lookup(struct inode *parent, struct dentry *child_dentry
 		pfs_de = (struct pantryfs_dir_entry *)(bh->b_data);
 		while (pfs_de && (count * sizeof(struct pantryfs_dir_entry) < PFS_BLOCK_SIZE)) {
 			if (strcmp(pfs_de->filename, name) && (pfs_de->active == 1)) {
+				brelse(bh);
 				goto retrieve;
 			}
 			pfs_de++;
@@ -132,7 +133,6 @@ struct dentry *pantryfs_lookup(struct inode *parent, struct dentry *child_dentry
 			return ERR_PTR(-ENOENT);
 		return ERR_PTR(-ENOENT);//no dentry
 	} else {
-		brelse(bh);
 		bh = NULL;
 		return ERR_PTR(-ENOENT);
 	}
@@ -143,12 +143,13 @@ retrieve:
 		return ERR_PTR(-ENOENT);
 	child = iget_locked(parent->i_sb, le64_to_cpu(child_dentry->d_inode->i_ino)); //VFS inode
 	if(!child)
-			return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ENOENT);
 	child->i_mode = pfs_child->mode;
 	child->i_op = &pantryfs_inode_ops;
 	child->i_private = (void *)(struct pantryfs_inode *) pfs_child;
+	child->i_fop = &pantryfs_dir_ops;
+	child->i_sb = parent->i_sb;
 	d_add(child_dentry, child);
-	brelse(bh);
 	bh = NULL;
 	return NULL;
 }
