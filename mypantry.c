@@ -56,7 +56,36 @@ int pantryfs_iterate(struct file *filp, struct dir_context *ctx)
 
 ssize_t pantryfs_read(struct file *filp, char __user *buf, size_t len, loff_t *ppos)
 {
-	return -EPERM;
+	struct buffer_head *i_store_bh;
+	struct pantryfs_inode *pfs_inode;
+	uint64_t data_block_number;
+	struct inode *i_node;
+	unsigned long i_ino;
+	size_t faillen;
+	void* startptr;
+	loff_t tmp_pos;
+
+	i_node = file_inode(filp);
+	i_ino = i_node->i_ino;
+	i_store_bh = ((struct pantryfs_sb_buffer_heads *)(i_node->i_sb->s_fs_info))->i_store_bh;
+	pfs_inode = (struct pantryfs_inode *)(i_store_bh->b_data) + (le64_to_cpu(i_ino)-1);
+	data_block_number = pfs_inode->data_block_number;
+	startptr = (sb_bread(i_node->i_sb, data_block_number))->b_data;
+	tmp_pos = *ppos;
+	brelse(i_store_bh);
+
+	if (tmp_pos < 0)
+		return -EINVAL;
+	if (tmp_pos >= PFS_BLOCK_SIZE || (len == 0))
+		return 0;
+	if (len > PFS_BLOCK_SIZE - tmp_pos)
+		len = PFS_BLOCK_SIZE - tmp_pos;
+	faillen = copy_to_user(buf, startptr + tmp_pos, len);
+	if(faillen == len)
+		return -EFAULT;
+	len -= faillen;
+	*ppos = tmp_pos + len;
+	return len;
 }
 
 loff_t pantryfs_llseek(struct file *filp, loff_t offset, int whence)
@@ -157,9 +186,6 @@ retrieve:
 		// pr_info("l157\n");
 		unlock_new_inode(child);
 	}
-	// pr_info("i_node: %llu\n", pfs_de->inode_no);
-	// pr_info("ci_node: %lu\n", child->i_ino);
-	// pr_info("159\n");
 	d_add(child_dentry, child);
 	bh = NULL;
 	return 0;
