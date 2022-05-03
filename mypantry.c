@@ -10,57 +10,9 @@
 #include "pantryfs_file_ops.h"
 #include "pantryfs_sb.h"
 #include "pantryfs_sb_ops.h"
-/*
+
 int pantryfs_iterate(struct file *filp, struct dir_context *ctx)
 {
-	struct buffer_head *tmp_bh, *i_store_bh;
-	struct pantryfs_dir_entry *pde;
-	unsigned int offset;
-	uint64_t block;
-	unsigned int pfs_dirent_size;
-	struct inode *dir = file_inode(filp);
-	struct pantryfs_inode *pfs_inode;
-
-	pfs_dirent_size = sizeof(struct pantryfs_dir_entry);
-	if(ctx->pos & (pfs_dirent_size - 1)) {
-		printk("Bad f_pos=%08lx for %s:%08lx\n",
-					(unsigned long)ctx->pos,
-					dir->i_sb->s_id, dir->i_ino);//not the right pos
-		return -EINVAL;
-	}
-	i_store_bh = ((struct pantryfs_sb_buffer_heads *)(dir->i_sb->s_fs_info))->i_store_bh;
-	pfs_inode = (struct pantryfs_inode* )(i_store_bh->b_data);
-	while(ctx->pos < dir->i_size){//iterate in dir's inodes
-		offset = ctx -> pos & (PFS_BLOCK_SIZE - 1);//pos & 111111111111
-		block = pfs_inode->data_block_number + (ctx -> pos >> 12);
-		tmp_bh = sb_bread(dir->i_sb, block);
-		if(!tmp_bh){
-			ctx->pos += PFS_BLOCK_SIZE - offset; 
-			continue;
-		}
-		do{
-			pde = (struct pantryfs_dir_entry *)(tmp_bh->b_data + offset);
-			if(pde -> inode_no) {
-				int size = strnlen(pde -> filename, PANTRYFS_FILENAME_BUF_SIZE);
-				if(!dir_emit(ctx, pde->filename, size,
-							le16_to_cpu(pde->inode_no),
-							DT_UNKNOWN)) {
-					brelse(tmp_bh);
-					return 0;
-				}
-			}
-			offset+= pfs_dirent_size;
-			ctx->pos += pfs_dirent_size;
-		}while ((offset < PFS_BLOCK_SIZE) && (ctx->pos < dir->i_size));
-		brelse(tmp_bh);
-	}
-
-	return 0;
-}
-*/
-int pantryfs_iterate(struct file *filp, struct dir_context *ctx)
-{
-	// return -EPERM;
 	// bool moved = false;//moved needed?
 	struct buffer_head *tmp_bh, *i_store_bh;
 	struct pantryfs_dir_entry *pde;
@@ -69,11 +21,12 @@ int pantryfs_iterate(struct file *filp, struct dir_context *ctx)
 	struct pantryfs_dir_entry *start;
 	struct inode *i_node;
 	unsigned long i_ino;
+	int size;
 
 	i_node = file_inode(filp);
 	i_ino = i_node->i_ino;//maximum of pos
 	i_store_bh = ((struct pantryfs_sb_buffer_heads *)(i_node->i_sb->s_fs_info))->i_store_bh;
-	pfs_inode = (struct pantryfs_inode* )(i_store_bh->b_data) + (le64_to_cpu(i_ino)-1); //* sizeof(struct pantryfs_inode));
+	pfs_inode = (struct pantryfs_inode *)(i_store_bh->b_data) + (le64_to_cpu(i_ino)-1);
 	data_block_number = pfs_inode->data_block_number;
 
 	tmp_bh = sb_bread(i_node->i_sb, data_block_number);//get the block
@@ -81,35 +34,24 @@ int pantryfs_iterate(struct file *filp, struct dir_context *ctx)
 	if (!dir_emit_dots(filp, ctx))
 		return 0;
 	pr_info("1ctx pos is: %lld\n", ctx->pos);
-	while(ctx->pos < PFS_MAX_CHILDREN) {
-		pde = start + ctx->pos;
+	pde = start;
+	while (ctx->pos < PFS_MAX_CHILDREN) {
 		pr_info("ctx pos is: %lld\n", ctx->pos);
-		if(pde == NULL)
+		if (pde == NULL)
 			break;
-		if(pde->active == 1){
-			int size = strnlen(pde -> filename, PANTRYFS_MAX_FILENAME_LENGTH);
-			if(!dir_emit(ctx, pde->filename, size,
-						le64_to_cpu(pde->inode_no),
+		if (pde->active == 1) {
+			size = strnlen(pde->filename, PANTRYFS_MAX_FILENAME_LENGTH);
+			if (!dir_emit(ctx, pde->filename, size,
+						pde->inode_no,
 						DT_UNKNOWN)) {
 				return 0;
-			}	
+			}
 		}
 		ctx->pos++;
+		pde++;
 	}
-	// while ((next = next_positive(dentry, p, 1)) != NULL) {
-	// 	if (!dir_emit(ctx, next->d_name.name, next->d_name.len,
-	// 		      d_inode(next)->i_ino, dt_type(d_inode(next))))
-	// 		break;
-	// 	moved = true;
-	// 	p = &next->d_child;
-	// 	ctx->pos++;
-	// }
 	return 0;
 }
-
-// static inline bool dir_emit(struct dir_context *ctx,
-// 			    const char *name, int namelen,
-// 			    u64 ino, unsigned type)
 
 ssize_t pantryfs_read(struct file *filp, char __user *buf, size_t len, loff_t *ppos)
 {
@@ -247,7 +189,7 @@ int pantryfs_fill_super(struct super_block *sb, void *data, int silent)//what is
 	//6. go through all inodes...
 	//7. not read only-- mark sb buffer dirty and set s_dirty
 	// return -EPERM;
-	
+
 	brelse(sb_bh);
 	brelse(i_store_bh);
 	return 0;
