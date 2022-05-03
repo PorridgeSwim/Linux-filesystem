@@ -33,10 +33,11 @@ int pantryfs_iterate(struct file *filp, struct dir_context *ctx)
 	start = (struct pantryfs_dir_entry *)tmp_bh->b_data;
 	if (!dir_emit_dots(filp, ctx))
 		return 0;
-	pr_info("1ctx pos is: %lld\n", ctx->pos);
+	// ctx-> pos -= 2; //why can't do this?
+	// pr_info("before loop ctx pos is: %lld\n", ctx->pos);
 	pde = start;
 	while (ctx->pos < PFS_MAX_CHILDREN) {
-		pr_info("ctx pos is: %lld\n", ctx->pos);
+		// pr_info("ctx pos is: %lld\n", ctx->pos);
 		if (pde == NULL)
 			break;
 		if (pde->active == 1) {
@@ -98,6 +99,7 @@ ssize_t pantryfs_write(struct file *filp, const char __user *buf, size_t len, lo
 struct dentry *pantryfs_lookup(struct inode *parent, struct dentry *child_dentry,
 		unsigned int flags)
 {
+	
 	return NULL;
 }
 
