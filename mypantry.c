@@ -65,6 +65,7 @@ ssize_t pantryfs_read(struct file *filp, char __user *buf, size_t len, loff_t *p
 	void *startptr;
 	loff_t tmp_pos;
 	uint64_t f_size;	//file size
+	struct buffer_head *data_bh;
 
 	i_node = file_inode(filp);
 	i_ino = i_node->i_ino;
@@ -72,8 +73,11 @@ ssize_t pantryfs_read(struct file *filp, char __user *buf, size_t len, loff_t *p
 	pfs_inode = (struct pantryfs_inode *)(i_store_bh->b_data) + (le64_to_cpu(i_ino)-1);
 	f_size = pfs_inode->file_size;
 	data_block_number = pfs_inode->data_block_number;
-	startptr = (sb_bread(i_node->i_sb, data_block_number))->b_data;
+	data_bh = sb_bread(i_node->i_sb, data_block_number);
+	startptr = data_bh->b_data;
 	tmp_pos = *ppos;
+	brelse(i_store_bh);
+	brelse(data_bh);
 	// brelse(i_store_bh);
 
 	if (tmp_pos < 0)
