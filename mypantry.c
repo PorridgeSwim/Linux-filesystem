@@ -65,6 +65,7 @@ ssize_t pantryfs_read(struct file *filp, char __user *buf, size_t len, loff_t *p
 	void *startptr;
 	loff_t tmp_pos;
 	uint64_t f_size;	//file size
+	struct buffer_head *data_bh;
 
 	i_node = file_inode(filp);
 	i_ino = i_node->i_ino;
@@ -72,8 +73,11 @@ ssize_t pantryfs_read(struct file *filp, char __user *buf, size_t len, loff_t *p
 	pfs_inode = (struct pantryfs_inode *)(i_store_bh->b_data) + (le64_to_cpu(i_ino)-1);
 	f_size = pfs_inode->file_size;
 	data_block_number = pfs_inode->data_block_number;
-	startptr = (sb_bread(i_node->i_sb, data_block_number))->b_data;
+	data_bh = sb_bread(i_node->i_sb, data_block_number);
+	startptr = data_bh->b_data;
 	tmp_pos = *ppos;
+	brelse(i_store_bh);
+	brelse(data_bh);
 	// brelse(i_store_bh);
 
 	if (tmp_pos < 0)
@@ -194,6 +198,13 @@ retrieve:
 		child->i_private = (void *)(struct pantryfs_inode *) pfs_child;
 		child->i_ino = pfs_de->inode_no;
 		child->i_sb = parent->i_sb;
+		child->i_atime = pfs_child->i_atime;
+		child->i_mtime = pfs_child->i_mtime;
+		child->i_ctime = pfs_child->i_ctime;
+		child->i_uid.val = pfs_child->uid;
+		child->i_gid.val = pfs_child->gid;
+		set_nlink(child, pfs_child->nlink);
+		child->i_blocks = (child->i_size + 512 - 1) >> 9;
 		// pr_info("l157\n");
 		unlock_new_inode(child);
 	}
@@ -241,6 +252,7 @@ void pantryfs_free_inode(struct inode *inode)
 int pantryfs_fill_super(struct super_block *sb, void *data, int silent)//what is data?
 {
 	struct pantryfs_super_block *pfs_sb;	// pfs_superblock
+	struct pantryfs_inode *pfs_inode;	// pfs_inode
 	struct pantryfs_sb_buffer_heads *two_bufferheads;
 	struct buffer_head *sb_bh, *i_store_bh;
 	struct inode *root_inode;
@@ -253,6 +265,7 @@ int pantryfs_fill_super(struct super_block *sb, void *data, int silent)//what is
 		return -EPERM;
 	}
 	i_store_bh = sb_bread(sb, 1);
+	pfs_inode = (struct pantryfs_inode *) (i_store_bh->b_data);
 	two_bufferheads = kmalloc(sizeof(struct pantryfs_sb_buffer_heads), GFP_KERNEL);
 	if (!two_bufferheads)
 		return -ENOMEM;
@@ -281,6 +294,14 @@ int pantryfs_fill_super(struct super_block *sb, void *data, int silent)//what is
 	root_inode->i_private = i_store_bh->b_data;
 	root_inode->i_sb = sb;//?
 	root_inode->i_size = PFS_BLOCK_SIZE;
+	// root_inode->i_mode = pfs_inode->mode;
+	root_inode->i_atime = pfs_inode->i_atime;
+	root_inode->i_mtime = pfs_inode->i_mtime;
+	root_inode->i_ctime = pfs_inode->i_ctime;
+	root_inode->i_uid.val = pfs_inode->uid;
+	root_inode->i_gid.val = pfs_inode->gid;
+	set_nlink(root_inode, pfs_inode->nlink);
+	root_inode->i_blocks = (root_inode->i_size + 512 - 1) >> 9;
 	unlock_new_inode(root_inode);
 	root_dentry = d_obtain_root(root_inode);//5. allocate a dentry
 	if (!root_dentry) {
