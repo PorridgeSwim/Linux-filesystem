@@ -62,13 +62,15 @@ ssize_t pantryfs_read(struct file *filp, char __user *buf, size_t len, loff_t *p
 	struct inode *i_node;
 	unsigned long i_ino;
 	size_t faillen;
-	void* startptr;
+	void *startptr;
 	loff_t tmp_pos;
+	uint64_t f_size;	//file size
 
 	i_node = file_inode(filp);
 	i_ino = i_node->i_ino;
 	i_store_bh = ((struct pantryfs_sb_buffer_heads *)(i_node->i_sb->s_fs_info))->i_store_bh;
 	pfs_inode = (struct pantryfs_inode *)(i_store_bh->b_data) + (le64_to_cpu(i_ino)-1);
+	f_size = pfs_inode->file_size;
 	data_block_number = pfs_inode->data_block_number;
 	startptr = (sb_bread(i_node->i_sb, data_block_number))->b_data;
 	tmp_pos = *ppos;
@@ -76,12 +78,12 @@ ssize_t pantryfs_read(struct file *filp, char __user *buf, size_t len, loff_t *p
 
 	if (tmp_pos < 0)
 		return -EINVAL;
-	if (tmp_pos >= PFS_BLOCK_SIZE || (len == 0))
+	if (tmp_pos >= f_size || (len == 0))
 		return 0;
-	if (len > PFS_BLOCK_SIZE - tmp_pos)
-		len = PFS_BLOCK_SIZE - tmp_pos;
+	if (len > f_size - tmp_pos)
+		len = f_size - tmp_pos;
 	faillen = copy_to_user(buf, startptr + tmp_pos, len);
-	if(faillen == len)
+	if (faillen == len)
 		return -EFAULT;
 	len -= faillen;
 	*ppos = tmp_pos + len;
@@ -137,10 +139,10 @@ struct dentry *pantryfs_lookup(struct inode *parent, struct dentry *child_dentry
 	const unsigned char *name;
 	uint64_t count = 0;
 
-	if(!parent)
+	if (!parent)
 		return ERR_PTR(-EINVAL);
 	info = parent->i_sb->s_fs_info;
-	if(!child_dentry)
+	if (!child_dentry)
 		return ERR_PTR(-EINVAL);
 	if (child_dentry->d_name.len > PANTRYFS_MAX_FILENAME_LENGTH)
 		return ERR_PTR(-ENAMETOOLONG);
@@ -148,7 +150,7 @@ struct dentry *pantryfs_lookup(struct inode *parent, struct dentry *child_dentry
 	pfs_inodes = (struct pantryfs_inode *)(info->i_store_bh->b_data);//start of inodes
 	// pfs_parent = pfs_inodes + le64_to_cpu(child_dentry->inode_no) - 1;//why child dentry?
 	pfs_parent = pfs_inodes + le64_to_cpu(parent->i_ino) - 1;//parent's inode
-	if(!pfs_parent)
+	if (!pfs_parent)
 		return ERR_PTR(-ENOENT);//no parent inode
 	bh = sb_bread(parent->i_sb, le64_to_cpu(pfs_parent->data_block_number));//parent's block
 	if (bh) {
@@ -160,31 +162,30 @@ struct dentry *pantryfs_lookup(struct inode *parent, struct dentry *child_dentry
 				goto retrieve;
 			}
 			pfs_de++;
-			count ++;
+			count++;
 		}
 		brelse(bh);
 		return ERR_PTR(-ENOENT);//no dentry
-	} else {
-		bh = NULL;
-		return ERR_PTR(-ENOENT);
+	}
+	bh = NULL;
+	return ERR_PTR(-ENOENT);
 	}
 
 retrieve:
-	pfs_child = pfs_inodes +  pfs_de->inode_no -1;//pfs inode
-	if(!pfs_child)
+	pfs_child = pfs_inodes +  pfs_de->inode_no - 1;//pfs inode
+	if (!pfs_child)
 		return ERR_PTR(-ENOENT);
 	child = iget_locked(parent->i_sb, pfs_de->inode_no); //VFS inode
-	if(!child)
+	if (!child)
 		return ERR_PTR(-ENOENT);
-	if(child->i_state && I_NEW){
+	if (child->i_state && I_NEW) {
 		child->i_mode = pfs_child->mode;
 		child->i_op = &pantryfs_inode_ops;
-		if(child->i_mode & S_IFDIR) {
-			child->i_fop = &pantryfs_dir_ops;	
-		}
-		else{
+		if (child->i_mode & S_IFDIR)
+			child->i_fop = &pantryfs_dir_ops;
+		else
 			child->i_fop = &pantryfs_file_ops;
-		}
+
 		child->i_size = pfs_child->file_size;
 		pr_info("child isize: %lld\n", child->i_size);
 		child->i_private = (void *)(struct pantryfs_inode *) pfs_child;
