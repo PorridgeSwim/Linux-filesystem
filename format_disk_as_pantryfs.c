@@ -55,6 +55,8 @@ int main(int argc, char *argv[])
 
 	char *hello_contents = "Hello world!\n";
 	char *names_contents = "You Zhou, Panyu Gao, Aoxue Wei\n";
+	// for part6
+	char *names_json_contents = "{\"names\": [ \"You Zhou\", \"Aoxue Wei\", \"Panyu Gao\"]}\n";
 	char buf[PFS_BLOCK_SIZE];
 
 	size_t len;
@@ -82,11 +84,15 @@ int main(int argc, char *argv[])
 	SETBIT(sb.free_inodes, 1); //hello
 	SETBIT(sb.free_inodes, 2); //members
 	SETBIT(sb.free_inodes, 3); //names.txt's inode idx = 2
+	// for part6
+	SETBIT(sb.free_inodes, 4);
 
 	SETBIT(sb.free_data_blocks, 0);
 	SETBIT(sb.free_data_blocks, 1);
 	SETBIT(sb.free_data_blocks, 2);
 	SETBIT(sb.free_data_blocks, 3);
+	// for part6
+	SETBIT(sb.free_data_blocks, 4);
 
 	/* Write the superblock to the first block of the filesystem. */
 	ret = write(fd, (char *)&sb, sizeof(sb));
@@ -133,8 +139,19 @@ int main(int argc, char *argv[])
 	ret = write(fd, (char *) &inode, sizeof(inode));
 	passert(ret == sizeof(inode), "Write names.txt inode");
 
+	// for part6
+	/* The names.json file will take inode num following hello inode num. */
+	inode_reset(&inode);
+	inode.nlink = 1;
+	inode.mode = S_IFREG | 0666;
+	inode.data_block_number = PANTRYFS_ROOT_DATABLOCK_NUMBER + 4;
+	inode.file_size = strlen(names_json_contents);
+
+	ret = write(fd, (char *) &inode, sizeof(inode));
+	passert(ret == sizeof(inode), "Write names.json inode");
+
 	// ret = lseek(fd, PFS_BLOCK_SIZE - 2 * sizeof(struct pantryfs_inode),
-	ret = lseek(fd, PFS_BLOCK_SIZE - 4 * sizeof(struct pantryfs_inode),
+	ret = lseek(fd, PFS_BLOCK_SIZE - 5 * sizeof(struct pantryfs_inode),
 		SEEK_CUR); //set to current + 2nd element
 	passert(ret >= 0, "Seek past inode table");
 
@@ -176,7 +193,16 @@ int main(int argc, char *argv[])
 	ret = write(fd, (char *) &dentry, sizeof(dentry));
 	passert(ret == sizeof(dentry), "Write dentry for names.txt");
 
-	len = PFS_BLOCK_SIZE - sizeof(struct pantryfs_dir_entry);
+	// for part6
+	dentry_reset(&dentry);
+	strncpy(dentry.filename, "names.json", sizeof(dentry.filename));
+	dentry.active = 1;
+	dentry.inode_no = PANTRYFS_ROOT_INODE_NUMBER + 4;
+
+	ret = write(fd, (char *) &dentry, sizeof(dentry));
+	passert(ret == sizeof(dentry), "Write dentry for names.json");
+
+	len = PFS_BLOCK_SIZE - 2 * sizeof(struct pantryfs_dir_entry);
 	ret = write(fd, zeroes, len);
 	passert(ret == len, "Pad to end of member block");
 	//block 3 ends
@@ -185,6 +211,14 @@ int main(int argc, char *argv[])
 	strncpy(buf, names_contents, sizeof(buf));
 	ret = write(fd, buf, sizeof(buf));//why can't use size of buff?
 	passert(ret == sizeof(buf), "Write names.txt contents");
+	len = PFS_BLOCK_SIZE - sizeof(buf);
+	ret = write(fd, zeroes, len);
+	passert(ret == len, "Pad to end of block 4, which belongs to names.txt");
+
+	/* Add the names.json file. */
+	strncpy(buf, names_json_contents, sizeof(buf));
+	ret = write(fd, buf, sizeof(buf));//why can't use size of buff?
+	passert(ret == sizeof(buf), "Write names.json contents");
 
 	ret = fsync(fd);
 	passert(ret == 0, "Flush writes to disk");
