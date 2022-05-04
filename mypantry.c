@@ -66,12 +66,17 @@ ssize_t pantryfs_read(struct file *filp, char __user *buf, size_t len, loff_t *p
 	loff_t tmp_pos;
 	uint64_t f_size;	//file size
 	struct buffer_head *bh;
+	//struct timespec64 ts;
 
+	//ktime_get_coarse_real_ts64(&ts);
 	i_node = file_inode(filp);
+	//i_node->i_atime = ts;
+	pantryfs_write_inode(i_node, NULL);
 	i_ino = i_node->i_ino;
+	f_size = i_node->i_size;
 	i_store_bh = ((struct pantryfs_sb_buffer_heads *)(i_node->i_sb->s_fs_info))->i_store_bh;
 	pfs_inode = (struct pantryfs_inode *)(i_store_bh->b_data) + (le64_to_cpu(i_ino)-1);
-	f_size = pfs_inode->file_size;
+	//f_size = pfs_inode->file_size;
 	data_block_number = pfs_inode->data_block_number;
 	bh = sb_bread(i_node->i_sb, data_block_number);
 	if (!bh)
@@ -80,13 +85,13 @@ ssize_t pantryfs_read(struct file *filp, char __user *buf, size_t len, loff_t *p
 	tmp_pos = *ppos;
 	// brelse(i_store_bh);
 
-	if (tmp_pos < 0) {
+	/*if (tmp_pos < 0) {
 		brelse(bh);
 		return -EINVAL;
-	}
-	if (tmp_pos >= f_size || (len == 0)) {
+	}*/
+	if (tmp_pos >= f_size || (len == 0) || tmp_pos < 0) {
 		brelse(bh);
-		return 0;
+		return -EINVAL;
 	}
 	if (len > f_size - tmp_pos)
 		len = f_size - tmp_pos;
@@ -135,6 +140,7 @@ int pantryfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 	pfs_inode->file_size = inode->i_size;
 
 	mark_buffer_dirty(i_store_bh);
+	sync_dirty_buffer(i_store_bh);
 	return 0;
 }
 
@@ -162,11 +168,11 @@ ssize_t pantryfs_write(struct file *filp, const char __user *buf, size_t len, lo
 	loff_t tmp_pos;
 	uint64_t f_size;	//file size
 	struct buffer_head *bh;
-	struct timespec64 ts;
+	//struct timespec64 ts;
 
-	ktime_get_coarse_real_ts64(&ts);
+	//ktime_get_coarse_real_ts64(&ts);
 	i_node = file_inode(filp);
-	i_node->i_atime = ts;
+	//i_node->i_atime = ts;
 	i_ino = i_node->i_ino;
 	i_store_bh = ((struct pantryfs_sb_buffer_heads *)(i_node->i_sb->s_fs_info))->i_store_bh;
 	pfs_inode = (struct pantryfs_inode *)(i_store_bh->b_data) + (le64_to_cpu(i_ino)-1);
@@ -178,23 +184,19 @@ ssize_t pantryfs_write(struct file *filp, const char __user *buf, size_t len, lo
 	startptr = bh->b_data;
 	tmp_pos = *ppos;
 	
-	if (len == 0) {
+	/*if (len == 0) {
 		brelse(bh);
 		return 0;
-	}
-	if (tmp_pos < 0 || tmp_pos > PFS_BLOCK_SIZE) {
+	}*/
+	if (tmp_pos < 0 || tmp_pos > PFS_BLOCK_SIZE || len == 0) {
 		brelse(bh);
 		return -EINVAL;
 	}
 	if (len > PFS_BLOCK_SIZE - tmp_pos)
 		len = PFS_BLOCK_SIZE - tmp_pos;
-	if (len == 0) {
-		brelse(bh);
-		return 0;
-	}
+
 	faillen = copy_from_user(startptr + tmp_pos, buf, len);
 	if (faillen == len && faillen > 0) {
-		pr_info("156\n");
 		mark_buffer_dirty(bh);
 		brelse(bh);
 		return -EFAULT;
@@ -202,8 +204,8 @@ ssize_t pantryfs_write(struct file *filp, const char __user *buf, size_t len, lo
 	len -= faillen;
 	*ppos = tmp_pos + len;
 	i_node->i_size = tmp_pos + len;
-	ktime_get_ts64(&ts);
-	i_node->i_mtime = ts;
+	//ktime_get_ts64(&ts2);
+	//i_node->i_mtime = ts;
 
 	mark_buffer_dirty(bh);
 	pantryfs_write_inode(i_node, NULL);
@@ -242,7 +244,6 @@ struct dentry *pantryfs_lookup(struct inode *parent, struct dentry *child_dentry
 		pfs_de = (struct pantryfs_dir_entry *)(bh->b_data);//start of pfs dentries
 		while (pfs_de && (count * sizeof(struct pantryfs_dir_entry) < PFS_BLOCK_SIZE)) {
 			if ((!strcmp(pfs_de->filename, name)) && (pfs_de->active == 1)) {
-				brelse(bh);
 				goto retrieve;
 			}
 			pfs_de++;
@@ -256,11 +257,15 @@ struct dentry *pantryfs_lookup(struct inode *parent, struct dentry *child_dentry
 
 retrieve:
 	pfs_child = pfs_inodes +  pfs_de->inode_no - 1;//pfs inode
-	if (!pfs_child)
+	if (!pfs_child) {
+		brelse(bh);
 		return ERR_PTR(-ENOENT);
+	}
 	child = iget_locked(parent->i_sb, pfs_de->inode_no); //VFS inode
-	if (!child)
+	if (!child) {
+		brelse(bh);
 		return ERR_PTR(-ENOENT);
+	}
 	if (child->i_state && I_NEW) {
 		child->i_mode = pfs_child->mode;
 		child->i_op = &pantryfs_inode_ops;
@@ -270,6 +275,7 @@ retrieve:
 			child->i_fop = &pantryfs_file_ops;
 		} else {
 			unlock_new_inode(child);
+			brelse(bh);
 			return ERR_PTR(-EINVAL);
 		}
 
@@ -282,6 +288,7 @@ retrieve:
 		unlock_new_inode(child);
 	}
 	d_add(child_dentry, child);
+	brelse(bh);
 	bh = NULL;
 	return 0;
 }
