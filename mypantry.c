@@ -169,7 +169,6 @@ struct dentry *pantryfs_lookup(struct inode *parent, struct dentry *child_dentry
 	}
 	bh = NULL;
 	return ERR_PTR(-ENOENT);
-	}
 
 retrieve:
 	pfs_child = pfs_inodes +  pfs_de->inode_no - 1;//pfs inode
@@ -181,13 +180,17 @@ retrieve:
 	if (child->i_state && I_NEW) {
 		child->i_mode = pfs_child->mode;
 		child->i_op = &pantryfs_inode_ops;
-		if (child->i_mode & S_IFDIR)
+		if (child->i_mode & S_IFDIR) {
 			child->i_fop = &pantryfs_dir_ops;
-		else
+		} else if (child->i_mode & S_IFREG) {
 			child->i_fop = &pantryfs_file_ops;
+		} else {
+			unlock_new_inode(child);
+			return ERR_PTR(-EINVAL);
+		}
+
 
 		child->i_size = pfs_child->file_size;
-		pr_info("child isize: %lld\n", child->i_size);
 		child->i_private = (void *)(struct pantryfs_inode *) pfs_child;
 		child->i_ino = pfs_de->inode_no;
 		child->i_sb = parent->i_sb;
