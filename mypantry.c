@@ -108,10 +108,10 @@ struct dentry *pantryfs_lookup(struct inode *parent, struct dentry *child_dentry
 	const unsigned char *name;
 	uint64_t count = 0;
 
-	if(!parent)
+	if (!parent)
 		return ERR_PTR(-EINVAL);
 	info = parent->i_sb->s_fs_info;
-	if(!child_dentry)
+	if (!child_dentry)
 		return ERR_PTR(-EINVAL);
 	if (child_dentry->d_name.len > PANTRYFS_MAX_FILENAME_LENGTH)
 		return ERR_PTR(-ENAMETOOLONG);
@@ -119,7 +119,7 @@ struct dentry *pantryfs_lookup(struct inode *parent, struct dentry *child_dentry
 	pfs_inodes = (struct pantryfs_inode *)(info->i_store_bh->b_data);//start of inodes
 	// pfs_parent = pfs_inodes + le64_to_cpu(child_dentry->inode_no) - 1;//why child dentry?
 	pfs_parent = pfs_inodes + le64_to_cpu(parent->i_ino) - 1;//parent's inode
-	if(!pfs_parent)
+	if (!pfs_parent)
 		return ERR_PTR(-ENOENT);//no parent inode
 	bh = sb_bread(parent->i_sb, le64_to_cpu(pfs_parent->data_block_number));//parent's block
 	if (bh) {
@@ -131,26 +131,32 @@ struct dentry *pantryfs_lookup(struct inode *parent, struct dentry *child_dentry
 				goto retrieve;
 			}
 			pfs_de++;
-			count ++;
+			count++;
 		}
 		brelse(bh);
 		return ERR_PTR(-ENOENT);//no dentry
-	} else {
-		bh = NULL;
-		return ERR_PTR(-ENOENT);
 	}
+	bh = NULL;
+	return ERR_PTR(-ENOENT);
 
 retrieve:
-	pfs_child = pfs_inodes +  pfs_de->inode_no -1;//pfs inode
-	if(!pfs_child)
+	pfs_child = pfs_inodes +  pfs_de->inode_no - 1;//pfs inode
+	if (!pfs_child)
 		return ERR_PTR(-ENOENT);
 	child = iget_locked(parent->i_sb, pfs_de->inode_no); //VFS inode
-	if(!child)
+	if (!child)
 		return ERR_PTR(-ENOENT);
-	if(child->i_state && I_NEW){
+	if (child->i_state && I_NEW) {
 		child->i_mode = pfs_child->mode;
 		child->i_op = &pantryfs_inode_ops;
-		child->i_fop = &pantryfs_dir_ops;
+		if (child->i_mode & S_IFDIR) {
+			child->i_fop = &pantryfs_dir_ops;
+		} else if (child->i_mode & S_IFREG) {
+			child->i_fop = &pantryfs_file_ops;
+		} else {
+			unlock_new_inode(child);
+			return ERR_PTR(-EINVAL);
+		}
 		child->i_private = (void *)(struct pantryfs_inode *) pfs_child;
 		child->i_ino = pfs_de->inode_no;
 		child->i_sb = parent->i_sb;
