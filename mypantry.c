@@ -77,21 +77,27 @@ ssize_t pantryfs_read(struct file *filp, char __user *buf, size_t len, loff_t *p
 	if (!bh)
 		return -ENOENT;
 	startptr = bh->b_data;
-	brelse(bh);
 	tmp_pos = *ppos;
 	// brelse(i_store_bh);
 
-	if (tmp_pos < 0)
+	if (tmp_pos < 0) {
+		brelse(bh);
 		return -EINVAL;
-	if (tmp_pos >= f_size || (len == 0))
+	}
+	if (tmp_pos >= f_size || (len == 0)) {
+		brelse(bh);
 		return 0;
+	}
 	if (len > f_size - tmp_pos)
 		len = f_size - tmp_pos;
 	faillen = copy_to_user(buf, startptr + tmp_pos, len);
-	if (faillen == len)
+	if (faillen == len) {
+		brelse(bh);
 		return -EFAULT;
+	}
 	len -= faillen;
 	*ppos = tmp_pos + len;
+	brelse(bh);
 	return len;
 }
 
@@ -112,7 +118,24 @@ int pantryfs_unlink(struct inode *dir, struct dentry *dentry)
 
 int pantryfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 {
-	return -EPERM;
+	struct buffer_head *i_store_bh;
+	struct pantryfs_inode *pfs_inode;
+	struct pantryfs_sb_buffer_heads *bhs;
+
+	bhs = (struct pantryfs_sb_buffer_heads *)(inode->i_sb->s_fs_info);
+	i_store_bh = bhs->i_store_bh;
+	pfs_inode = (struct pantryfs_inode *)inode->i_private;
+	pfs_inode->mode = inode->i_mode;
+	pfs_inode->uid = inode->i_uid.val;
+	pfs_inode->gid = inode->i_gid.val;
+	pfs_inode->i_atime = inode->i_atime;
+	pfs_inode->i_mtime = inode->i_mtime;
+	pfs_inode->i_ctime = inode->i_ctime;
+	pfs_inode->nlink = inode->i_nlink;
+	pfs_inode->file_size = inode->i_size;
+
+	mark_buffer_dirty(i_store_bh);
+	return 0;
 }
 
 void pantryfs_evict_inode(struct inode *inode)
@@ -139,8 +162,11 @@ ssize_t pantryfs_write(struct file *filp, const char __user *buf, size_t len, lo
 	loff_t tmp_pos;
 	uint64_t f_size;	//file size
 	struct buffer_head *bh;
+	struct timespec64 ts;
 
+	ktime_get_coarse_real_ts64(&ts);
 	i_node = file_inode(filp);
+	i_node->i_atime = ts;
 	i_ino = i_node->i_ino;
 	i_store_bh = ((struct pantryfs_sb_buffer_heads *)(i_node->i_sb->s_fs_info))->i_store_bh;
 	pfs_inode = (struct pantryfs_inode *)(i_store_bh->b_data) + (le64_to_cpu(i_ino)-1);
@@ -156,13 +182,12 @@ ssize_t pantryfs_write(struct file *filp, const char __user *buf, size_t len, lo
 		brelse(bh);
 		return 0;
 	}
-	if (tmp_pos < 0 || tmp_pos > f_size) {
-		pr_info("151\n");
+	if (tmp_pos < 0 || tmp_pos > PFS_BLOCK_SIZE) {
 		brelse(bh);
 		return -EINVAL;
 	}
-	if (len > f_size - tmp_pos)
-		len = f_size - tmp_pos;	// do not over write the null pointer
+	if (len > PFS_BLOCK_SIZE - tmp_pos)
+		len = PFS_BLOCK_SIZE - tmp_pos;
 	if (len == 0) {
 		brelse(bh);
 		return 0;
@@ -176,7 +201,12 @@ ssize_t pantryfs_write(struct file *filp, const char __user *buf, size_t len, lo
 	}
 	len -= faillen;
 	*ppos = tmp_pos + len;
+	i_node->i_size = tmp_pos + len;
+	ktime_get_ts64(&ts);
+	i_node->i_mtime = ts;
+
 	mark_buffer_dirty(bh);
+	pantryfs_write_inode(i_node, NULL);
 	brelse(bh);
 	return len;
 }
