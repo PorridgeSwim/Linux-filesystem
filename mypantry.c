@@ -44,7 +44,7 @@ int pantryfs_iterate(struct file *filp, struct dir_context *ctx)
 			size = strnlen(pde->filename, PANTRYFS_MAX_FILENAME_LENGTH);
 			if (!dir_emit(ctx, pde->filename, size,
 						pde->inode_no,
-						DT_UNKNOWN)) {
+						S_DT(i_node->i_mode))) {
 				return 0;
 			}
 		}
