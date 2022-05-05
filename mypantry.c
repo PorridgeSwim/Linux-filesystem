@@ -245,6 +245,19 @@ void pantryfs_evict_inode(struct inode *inode)
 
 int pantryfs_fsync(struct file *filp, loff_t start, loff_t end, int datasync)
 {
+	// struct buffer_head *bh;
+	// struct pantryfs_inode *pfs_inode;
+	// int ret;
+	
+	// pfs_inode = (struct pantryfs_inode *)filp->f_inode->i_private;
+	// bh = sb_bread(filp->f_inode->i_sb, pfs_inode->data_block_number);
+	// ret = sync_dirty_buffer(bh);
+	// if(ret < 0){
+	// 	brelse(bh);
+	// 	return ret;
+	// }
+	// brelse(bh);
+	// return 0;
 	return generic_file_fsync(filp, start, end, datasync);
 }
 
