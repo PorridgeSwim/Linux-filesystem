@@ -223,6 +223,7 @@ int pantryfs_unlink(struct inode *dir, struct dentry *dentry)
 						inode->i_sb->s_fs_info;
 
 
+	pr_info("unlink begin\n");
 	if (!dir || !dentry)
 		return -EINVAL;
 	if (!(dir->i_mode & S_IFDIR))
@@ -238,10 +239,8 @@ int pantryfs_unlink(struct inode *dir, struct dentry *dentry)
 		return -ENOENT;
 	pfs_de = (struct pantryfs_dir_entry *)(bh->b_data);//start of pfs dentries
 	while (pfs_de && (count * sizeof(struct pantryfs_dir_entry) < PFS_BLOCK_SIZE)) {
-		if ((!strcmp(pfs_de->filename, name)) && (pfs_de->active == 1)) {
-			brelse(bh);
+		if ((!strcmp(pfs_de->filename, name)) && (pfs_de->active == 1))
 			goto unlink_out;
-		}
 		pfs_de++;
 		count++;
 	}
@@ -262,6 +261,8 @@ unlink_out:
 	pantryfs_write_inode(inode, NULL);
 	mark_buffer_dirty(bh);
 	brelse(bh);
+	d_drop(dentry);
+	pr_info("unlink end\n");
 
 	return 0;
 }
@@ -318,15 +319,15 @@ void pantryfs_evict_inode(struct inode *inode)
 	bh = sb_bread(inode->i_sb, pfs_inode->data_block_number);
 	CLEARBIT(pfs_sb->free_data_blocks, pfs_inode->data_block_number - 2);
 	CLEARBIT(pfs_sb->free_inodes, ino - 1);
-	memset(pfs_inode, 0, sizeof(struct pantryfs_inode));
-	memset(bh, 0, PFS_BLOCK_SIZE);
+	//memset(pfs_inode, 0, sizeof(struct pantryfs_inode));
+	//memset(bh, 0, PFS_BLOCK_SIZE);
 	mark_buffer_dirty(i_store_bh);
 	sync_dirty_buffer(i_store_bh);
 	mark_buffer_dirty(sb_bh);
 	sync_dirty_buffer(sb_bh);
-	mark_buffer_dirty(bh);
-	sync_dirty_buffer(bh);
-	brelse(bh);
+	//mark_buffer_dirty(bh);
+	//sync_dirty_buffer(bh);
+	//brelse(bh);
 	pr_info("finish evict\n");
 }
 
@@ -615,12 +616,12 @@ static struct dentry *pantryfs_mount(struct file_system_type *fs_type, int flags
 
 static void pantryfs_kill_superblock(struct super_block *sb)
 {
+	struct s_fs_info *info;
+	info = sb->s_fs_info;
 	brelse(((struct pantryfs_sb_buffer_heads *)sb->s_fs_info)->sb_bh);
 	brelse(((struct pantryfs_sb_buffer_heads *)sb->s_fs_info)->i_store_bh);
-	kfree(sb->s_fs_info);
-	sb->s_fs_info = NULL;
-
 	kill_block_super(sb);
+	kfree(info);
 	pr_info("mypantryfs superblock destroyed. Unmount successful.\n");
 }
 
