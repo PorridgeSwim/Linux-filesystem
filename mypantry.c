@@ -162,7 +162,7 @@ int pantryfs_create(struct inode *parent, struct dentry *dentry, umode_t mode, b
 	newinode->i_op = &pantryfs_inode_ops;
 	newinode->i_fop = &pantryfs_file_ops;
 	newinode->i_ino = new_ino+1;
-	mark_inode_dirty(newinode);
+	//mark_inode_dirty(newinode);
 
 	//add new pfs dentry to parent's block
 	par_ino = le64_to_cpu(parent->i_ino);
@@ -171,7 +171,6 @@ int pantryfs_create(struct inode *parent, struct dentry *dentry, umode_t mode, b
 	tmp_pfs_dentry = (struct pantryfs_dir_entry *)(par_bh->b_data);
 	for(cnt = 0; cnt < PFS_MAX_CHILDREN; cnt++) {
 		if((!tmp_pfs_dentry) || (tmp_pfs_dentry)->active == 0){//find an empty or deactive pfs dentry
-			tmp_pfs_dentry = kmalloc(sizeof(struct pantryfs_dir_entry), GFP_KERNEL);
 			tmp_pfs_dentry->inode_no = new_ino+1;
 			strncpy(tmp_pfs_dentry->filename, dentry->d_name.name, sizeof(tmp_pfs_dentry->filename));
 			tmp_pfs_dentry->active = 1;
@@ -190,7 +189,6 @@ int pantryfs_create(struct inode *parent, struct dentry *dentry, umode_t mode, b
 	}
 
 	tmp_pfs_inode += new_ino;
-	tmp_pfs_inode = kmalloc(sizeof(struct pantryfs_inode), GFP_KERNEL);
 	tmp_pfs_inode->mode = mode;
 	tmp_pfs_inode->uid = newinode->i_uid.val;
 	tmp_pfs_inode->gid = newinode->i_gid.val;
