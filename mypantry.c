@@ -245,7 +245,7 @@ void pantryfs_evict_inode(struct inode *inode)
 
 int pantryfs_fsync(struct file *filp, loff_t start, loff_t end, int datasync)
 {
-	return -EPERM;
+	return generic_file_fsync(filp, start, end, datasync);
 }
 
 ssize_t pantryfs_write(struct file *filp, const char __user *buf, size_t len, loff_t *ppos)
@@ -272,8 +272,6 @@ ssize_t pantryfs_write(struct file *filp, const char __user *buf, size_t len, lo
 		return -EFBIG;
 	if (len > PFS_BLOCK_SIZE - *ppos)
 		len = PFS_BLOCK_SIZE - *ppos;
-	if (*ppos > i_size_read(i_node))
-		return -EPERM;
 
 	// get pfs inode
 	i_ino = i_node->i_ino;
