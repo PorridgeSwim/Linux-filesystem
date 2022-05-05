@@ -135,19 +135,19 @@ int pantryfs_create(struct inode *parent, struct dentry *dentry, umode_t mode, b
 	//find a new inode no, and set ts bit to 1
 	new_ino = 0;
 	new_blkno = 0;
-	while(IS_SET(pfs_sb->free_inodes, new_ino) && new_ino <= PFS_MAX_INODES){
+	while(IS_SET(pfs_sb->free_inodes, new_ino) && new_ino < PFS_MAX_INODES){
 		new_ino++;
 	}
-	while(IS_SET(pfs_sb->free_data_blocks, new_blkno) && new_blkno <= PFS_MAX_CHILDREN){
+	while(IS_SET(pfs_sb->free_data_blocks, new_blkno) && new_blkno < PFS_MAX_CHILDREN){
 		new_blkno++;
 	}
-	if(new_ino > PFS_MAX_INODES || new_blkno > PFS_MAX_CHILDREN)
+	if(new_ino >= PFS_MAX_INODES || new_blkno >= PFS_MAX_CHILDREN)
 		return -ENOSPC;
 	SETBIT(pfs_sb->free_inodes, new_ino);
 	SETBIT(pfs_sb->free_data_blocks, new_blkno);
 
 	//find a new inode
-	newinode =  iget_locked(parent->i_sb, new_ino+1);
+	newinode = iget_locked(parent->i_sb, new_ino+1);
 	if (!newinode){
 		CLEARBIT(pfs_sb->free_inodes, new_ino);
 		CLEARBIT(pfs_sb->free_data_blocks, new_blkno);
@@ -198,6 +198,8 @@ int pantryfs_create(struct inode *parent, struct dentry *dentry, umode_t mode, b
 	tmp_pfs_inode->nlink = 1;
 	tmp_pfs_inode->data_block_number = new_blkno+2;
 	tmp_pfs_inode->file_size = 0;
+
+	newinode->i_private = (void *)(struct pantryfs_inode *)tmp_pfs_inode;
 	d_instantiate(dentry, newinode);
 	unlock_new_inode(newinode);
 	mark_buffer_dirty(par_bh);
