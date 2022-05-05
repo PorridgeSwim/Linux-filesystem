@@ -127,6 +127,7 @@ int pantryfs_create(struct inode *parent, struct dentry *dentry, umode_t mode, b
 	uint32_t cnt;
 	struct timespec64 ts;
 
+	pr_info("create called\n");
 	ktime_get_coarse_real_ts64(&ts);
 	pfs_bh = (struct pantryfs_sb_buffer_heads *)parent->i_sb->s_fs_info;
 	pfs_sb = (struct pantryfs_super_block *)pfs_bh->sb_bh->b_data;
@@ -146,30 +147,32 @@ int pantryfs_create(struct inode *parent, struct dentry *dentry, umode_t mode, b
 	SETBIT(pfs_sb->free_data_blocks, new_blkno);
 
 	//find a new inode
-	newinode =  iget_locked(parent->i_sb, new_ino);
+	newinode =  iget_locked(parent->i_sb, new_ino+1);
 	if (!newinode){
 		CLEARBIT(pfs_sb->free_inodes, new_ino);
 		CLEARBIT(pfs_sb->free_data_blocks, new_blkno);
+		pr_info("l154 no newinode\n");
 		return -ENOSPC;
 	}
 	//initialize new inode, 
 	inode_init_owner(newinode, parent, mode);
+	newinode->i_sb = parent->i_sb;
 	newinode->i_mtime = newinode->i_atime = newinode->i_ctime = ts;
 	newinode->i_blocks = 1;//right?
 	newinode->i_op = &pantryfs_inode_ops;
 	newinode->i_fop = &pantryfs_file_ops;
-	newinode->i_ino = new_ino;
+	newinode->i_ino = new_ino+1;
 	mark_inode_dirty(newinode);
 
 	//add new pfs dentry to parent's block
 	par_ino = le64_to_cpu(parent->i_ino);
-	par_pfs_inode = tmp_pfs_inode + par_ino - 1;
+	par_pfs_inode = (struct pantryfs_inode *)parent->i_private;
 	par_bh = sb_bread(parent->i_sb, le64_to_cpu(par_pfs_inode->data_block_number));
 	tmp_pfs_dentry = (struct pantryfs_dir_entry *)(par_bh->b_data);
 	for(cnt = 0; cnt < PFS_MAX_CHILDREN; cnt++) {
 		if((!tmp_pfs_dentry) || (tmp_pfs_dentry)->active == 0){//find an empty or deactive pfs dentry
 			tmp_pfs_dentry = kmalloc(sizeof(struct pantryfs_dir_entry), GFP_KERNEL);
-			tmp_pfs_dentry->inode_no = new_ino;
+			tmp_pfs_dentry->inode_no = new_ino+1;
 			strncpy(tmp_pfs_dentry->filename, dentry->d_name.name, sizeof(tmp_pfs_dentry->filename));
 			tmp_pfs_dentry->active = 1;
 			break;
@@ -182,31 +185,26 @@ int pantryfs_create(struct inode *parent, struct dentry *dentry, umode_t mode, b
 		CLEARBIT(pfs_sb->free_inodes, new_ino);
 		CLEARBIT(pfs_sb->free_data_blocks, new_blkno);
 		discard_new_inode(newinode);
+		pr_info("l187 no more child\n");
 		return -ENOSPC;
 	}
-	//add the new pantry inode to pantry fs inodes
-	for(cnt = 0; cnt < PFS_MAX_INODES; cnt++){
-		if(!tmp_pfs_inode){
-			tmp_pfs_inode = kmalloc(sizeof(struct pantryfs_inode), GFP_KERNEL);
-			tmp_pfs_inode->mode = mode;
-			tmp_pfs_inode->uid = newinode->i_uid.val;
-			tmp_pfs_inode->gid = newinode->i_gid.val;
-			tmp_pfs_inode->i_atime = tmp_pfs_inode->i_ctime = tmp_pfs_inode->i_mtime = ts;
-			tmp_pfs_inode->nlink = 1;
-			tmp_pfs_inode->data_block_number = new_blkno;
-			tmp_pfs_inode->file_size = 0;
-		}
-		else{
-			tmp_pfs_inode++;
-		}
-	}
-	if(cnt >= PFS_MAX_INODES){
-		CLEARBIT(pfs_sb->free_inodes, new_ino);
-		CLEARBIT(pfs_sb->free_data_blocks, new_blkno);
-		discard_new_inode(newinode);
-		return -ENOSPC;
-	}
+
+	tmp_pfs_inode += new_ino;
+	tmp_pfs_inode = kmalloc(sizeof(struct pantryfs_inode), GFP_KERNEL);
+	tmp_pfs_inode->mode = mode;
+	tmp_pfs_inode->uid = newinode->i_uid.val;
+	tmp_pfs_inode->gid = newinode->i_gid.val;
+	tmp_pfs_inode->i_atime = tmp_pfs_inode->i_ctime = tmp_pfs_inode->i_mtime = ts;
+	tmp_pfs_inode->nlink = 1;
+	tmp_pfs_inode->data_block_number = new_blkno+2;
+	tmp_pfs_inode->file_size = 0;
+	d_instantiate(dentry, newinode);
 	unlock_new_inode(newinode);
+	mark_buffer_dirty(par_bh);
+	mark_buffer_dirty(pfs_bh->i_store_bh);
+	sync_dirty_buffer(pfs_bh->i_store_bh);
+	brelse(par_bh);
+	pr_info("new inode pfsinode pfsdentry created!\n");
 	return 0;
 }
 
@@ -350,18 +348,13 @@ struct dentry *pantryfs_lookup(struct inode *parent, struct dentry *child_dentry
 			pfs_de++;
 			count++;
 		}
-		//create a new one?
-		if(flags & O_CREAT){
-			if(pantryfs_create(parent, child_dentry, 0777, 0) >= 0){
-				return NULL;
-			}
-		}
-		else{
-			brelse(bh);
-			return ERR_PTR(-ENOENT);//no dentry
-		}
+		d_add(child_dentry, NULL);
+		brelse(bh);
+		bh = NULL;
+		return NULL;
 	}
 	bh = NULL;
+	// pr_info("look up return 365\n");
 	return ERR_PTR(-ENOENT);
 
 retrieve:
@@ -369,6 +362,7 @@ retrieve:
 	pfs_child = pfs_inodes +  pfs_de->inode_no - 1;//pfs inode
 	if (!pfs_child) {
 		brelse(bh);
+		// pr_info("look up return 373\n");
 		return ERR_PTR(-ENOENT);
 	}
 
@@ -376,6 +370,7 @@ retrieve:
 	child = iget_locked(parent->i_sb, pfs_de->inode_no); //VFS inode
 	if (!child) {
 		brelse(bh);
+		// pr_info("look up return 381\n");
 		return ERR_PTR(-ENOENT);
 	}
 	if (child->i_state && I_NEW) {
@@ -410,7 +405,7 @@ retrieve:
 	d_add(child_dentry, child);
 	brelse(bh);
 	bh = NULL;
-	return 0;
+	return NULL;
 }
 
 int pantryfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
