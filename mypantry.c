@@ -294,7 +294,7 @@ int pantryfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 void pantryfs_evict_inode(struct inode *inode)
 {
 	struct pantryfs_inode *pfs_inode;
-	struct buffer_head *i_store_bh, *sb_bh, *bh;
+	struct buffer_head *i_store_bh, *sb_bh;
 	struct pantryfs_sb_buffer_heads *bhs;
 	unsigned long ino;
 	struct pantryfs_super_block *pfs_sb;
@@ -320,7 +320,7 @@ void pantryfs_evict_inode(struct inode *inode)
 	pr_info("evict reference count is %u\n", count);
 	ino = inode->i_ino;
 	pfs_inode = (struct pantryfs_inode *)inode->i_private;
-	bh = sb_bread(inode->i_sb, pfs_inode->data_block_number);
+	//bh = sb_bread(inode->i_sb, pfs_inode->data_block_number);
 	CLEARBIT(pfs_sb->free_data_blocks, pfs_inode->data_block_number - 2);
 	CLEARBIT(pfs_sb->free_inodes, ino - 1);
 	//memset(pfs_inode, 0, sizeof(struct pantryfs_inode));
@@ -413,7 +413,7 @@ struct dentry *pantryfs_lookup(struct inode *parent, struct dentry *child_dentry
 	const unsigned char *name;
 	uint64_t count = 0;
 
-	//pr_info("begin lookup\n");
+	pr_info("begin lookup\n");
 	// loopup check
 	if (!parent)
 		return ERR_PTR(-EINVAL);
@@ -498,6 +498,7 @@ retrieve:
 	d_add(child_dentry, child);
 	brelse(bh);
 	bh = NULL;
+	pr_info("end lookup\n");
 	return NULL;
 }
 
@@ -536,6 +537,8 @@ int pantryfs_link(struct dentry *old_dentry, struct inode *dir, struct dentry *d
 			if (!pfs_dentries->active) {
 				goto link_out;
 			}
+		} else {
+			goto link_out;
 		}
 		pfs_dentries++;
 		count++;
@@ -554,7 +557,7 @@ link_out:
 	//d_add(dentry, NULL);
 	mark_buffer_dirty(bh);
 	sync_dirty_buffer(bh);
-	brelse(bh);
+	//brelse(bh);
 	//ihold(inode);
 	//d_instantiate(dentry, inode);
 	pr_info("link end and rcount %u\n", inode->i_count.counter);
