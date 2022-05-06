@@ -466,7 +466,7 @@ retrieve:
 		// pr_info("look up return 381\n");
 		return ERR_PTR(-ENOENT);
 	}
-	if (child->i_state && I_NEW) {
+	if (child->i_state & I_NEW) {
 		// synchronize statistic
 		child->i_mode = pfs_child->mode;
 		child->i_op = &pantryfs_inode_ops;
