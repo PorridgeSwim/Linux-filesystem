@@ -531,7 +531,7 @@ int pantryfs_link(struct dentry *old_dentry, struct inode *dir, struct dentry *d
 	pfs_inode = (struct pantryfs_inode *)inode->i_private;
 	pfs_parent = (struct pantryfs_inode *)dir->i_private;
 	bh = sb_bread(dir->i_sb, pfs_parent->data_block_number);
-	pfs_dentries = (struct pantryfs_dir_entry *)bh;
+	pfs_dentries = (struct pantryfs_dir_entry *)bh->b_data;
 	while (count * sizeof(struct pantryfs_dir_entry) < PFS_BLOCK_SIZE) {
 		if (pfs_dentries) {
 			if (!pfs_dentries->active) {
@@ -551,15 +551,11 @@ link_out:
 	strcpy(pfs_dentries->filename, dentry->d_name.name);
 	inc_nlink(inode);
 	pantryfs_write_inode(inode, NULL);
-	//mark_inode_dirty(inode);
 	ihold(inode);
 	d_instantiate(dentry, inode);
-	//d_add(dentry, NULL);
 	mark_buffer_dirty(bh);
 	sync_dirty_buffer(bh);
-	//brelse(bh);
-	//ihold(inode);
-	//d_instantiate(dentry, inode);
+	brelse(bh);
 	pr_info("link end and rcount %u\n", inode->i_count.counter);
 	return 0;
 }
