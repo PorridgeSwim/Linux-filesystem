@@ -140,9 +140,9 @@ int pantryfs_create(struct inode *parent, struct dentry *dentry, umode_t mode, b
 	new_blkno = 0;
 	while (IS_SET(pfs_sb->free_inodes, new_ino) && new_ino < PFS_MAX_INODES)
 		new_ino++;
-	while (IS_SET(pfs_sb->free_data_blocks, new_blkno) && new_blkno < PFS_MAX_CHILDREN)
+	while (IS_SET(pfs_sb->free_data_blocks, new_blkno) && new_blkno < PFS_MAX_INODES)
 		new_blkno++;
-	if (new_ino >= PFS_MAX_INODES || new_blkno >= PFS_MAX_CHILDREN)
+	if (new_ino >= PFS_MAX_INODES || new_blkno >= PFS_MAX_INODES)
 		return -ENOSPC;
 	SETBIT(pfs_sb->free_inodes, new_ino);
 	SETBIT(pfs_sb->free_data_blocks, new_blkno);
@@ -513,7 +513,52 @@ int pantryfs_rmdir(struct inode *dir, struct dentry *dentry)
 
 int pantryfs_link(struct dentry *old_dentry, struct inode *dir, struct dentry *dentry)
 {
-	return -EPERM;
+
+	struct pantryfs_inode *pfs_inode, *pfs_parent;
+	struct buffer_head *bh;
+	struct pantryfs_dir_entry *pfs_dentries;
+	int count = 0;
+	struct inode *inode = d_inode(old_dentry);
+
+	pr_info("link begin and rcount %u\n", inode->i_count.counter);
+	if (!(inode->i_mode & S_IFREG)) {
+		pr_info("ifreg\n");
+		return -EPERM;
+	}
+	if (!old_dentry || !dir || !dentry)
+		return -EINVAL;
+	pfs_inode = (struct pantryfs_inode *)inode->i_private;
+	pfs_parent = (struct pantryfs_inode *)dir->i_private;
+	bh = sb_bread(dir->i_sb, pfs_parent->data_block_number);
+	pfs_dentries = (struct pantryfs_dir_entry *)bh;
+	while (count * sizeof(struct pantryfs_dir_entry) < PFS_BLOCK_SIZE) {
+		if (pfs_dentries) {
+			if (!pfs_dentries->active) {
+				goto link_out;
+			}
+		}
+		pfs_dentries++;
+		count++;
+	}
+	brelse(bh);
+	return -ENOSPC;
+link_out:
+	pfs_dentries->inode_no = old_dentry->d_inode->i_ino;
+	pfs_dentries->active = 1;
+	strcpy(pfs_dentries->filename, dentry->d_name.name);
+	inc_nlink(inode);
+	pantryfs_write_inode(inode, NULL);
+	//mark_inode_dirty(inode);
+	ihold(inode);
+	d_instantiate(dentry, inode);
+	//d_add(dentry, NULL);
+	mark_buffer_dirty(bh);
+	sync_dirty_buffer(bh);
+	brelse(bh);
+	//ihold(inode);
+	//d_instantiate(dentry, inode);
+	pr_info("link end and rcount %u\n", inode->i_count.counter);
+	return 0;
 }
 
 int pantryfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
