@@ -503,9 +503,6 @@ retrieve:
 
 int pantryfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 {
-	
-	// d_instantiate()
-	
 	struct inode *newinode;
 	struct pantryfs_inode *tmp_pfs_inode, *par_pfs_inode;
 	struct pantryfs_super_block *pfs_sb;
@@ -536,13 +533,11 @@ int pantryfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 	//find a new inode no, and set ts bit to 1
 	new_ino = 0;
 	new_blkno = 0;
-	while(IS_SET(pfs_sb->free_inodes, new_ino) && new_ino < PFS_MAX_INODES) {
+	while (IS_SET(pfs_sb->free_inodes, new_ino) && new_ino < PFS_MAX_INODES)
 		new_ino++;
-	}
-	while(IS_SET(pfs_sb->free_data_blocks, new_blkno) && new_blkno < PFS_MAX_INODES) {
+	while (IS_SET(pfs_sb->free_data_blocks, new_blkno) && new_blkno < PFS_MAX_INODES)
 		new_blkno++;
-	}
-	if(new_ino > PFS_MAX_INODES || new_blkno > PFS_MAX_INODES) {
+	if (new_ino > PFS_MAX_INODES || new_blkno > PFS_MAX_INODES) {
 		inode_dec_link_count(dir);
 		pr_info("no empty block\n");
 		return -ENOSPC;
@@ -554,7 +549,7 @@ int pantryfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 
 	// create new inode in VFS
 	newinode = iget_locked(dir->i_sb, new_ino+1);
-	if (!newinode){
+	if (!newinode) {
 		CLEARBIT(pfs_sb->free_inodes, new_ino);
 		CLEARBIT(pfs_sb->free_data_blocks, new_blkno);
 		inode_dec_link_count(dir);
@@ -581,16 +576,15 @@ int pantryfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 	par_pfs_inode = (struct pantryfs_inode *)dir->i_private;
 	par_bh = sb_bread(dir->i_sb, le64_to_cpu(par_pfs_inode->data_block_number));
 	tmp_pfs_dentry = (struct pantryfs_dir_entry *)(par_bh->b_data);
-	for(cnt = 0; cnt < PFS_MAX_CHILDREN; cnt++) {
-		if((!tmp_pfs_dentry) || (tmp_pfs_dentry)->active == 0){//find an empty or deactive pfs dentry
+	for (cnt = 0; cnt < PFS_MAX_CHILDREN; cnt++) {
+		if ((!tmp_pfs_dentry) || (tmp_pfs_dentry)->active == 0) {
 			tmp_pfs_dentry->inode_no = new_ino+1;
-			strncpy(tmp_pfs_dentry->filename, dentry->d_name.name, sizeof(tmp_pfs_dentry->filename));
+			strncpy(tmp_pfs_dentry->filename, dentry->d_name.name,
+						sizeof(tmp_pfs_dentry->filename));
 			tmp_pfs_dentry->active = 1;
 			break;
 		}
-		else{
-			tmp_pfs_dentry++;
-		}
+		tmp_pfs_dentry++;
 	}
 
 	if (cnt >= PFS_MAX_CHILDREN) {
@@ -613,11 +607,11 @@ int pantryfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 
 	newinode->i_private = (void *)(struct pantryfs_inode *)tmp_pfs_inode;
 	d_instantiate(dentry, newinode);
+	unlock_new_inode(newinode);
 	mark_buffer_dirty(par_bh);
 	mark_buffer_dirty(pfs_bh->i_store_bh);
 	sync_dirty_buffer(pfs_bh->i_store_bh);
 	brelse(par_bh);
-	unlock_new_inode(newinode);
 	pr_info("new inode pfsinode pfsdentry created!\n");
 	return 0;
 
@@ -626,32 +620,20 @@ int pantryfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 int pantryfs_rmdir(struct inode *dir, struct dentry *dentry)
 {
 	struct inode *inode = d_inode(dentry);
-	struct buffer_head *bh, *i_store_bh, *sb_bh;
+	struct pantryfs_inode *pfs_inode;
+	struct buffer_head *bh;
 	struct pantryfs_dir_entry *pfs_de;
-	struct pantryfs_inode *pfs_parent, *pfs_inode;
-	uint64_t count = 0;
-	const unsigned char *name;
-	struct pantryfs_sb_buffer_heads *info = (struct pantryfs_sb_buffer_heads *)
-						inode->i_sb->s_fs_info;
-	struct pantryfs_super_block *pfs_sb;
 	int cnt;
-	unsigned long ino;
 
 	pr_info("rmdir begin\n");
 	if (!dir || !dentry)
 		return -EINVAL;
-	
-	name = dentry->d_name.name;
-	i_store_bh = info->i_store_bh;
-	sb_bh = info->sb_bh;
-	pfs_inode = (struct pantryfs_inode *)inode->i_private;
-	pfs_parent = (struct pantryfs_inode *)dir->i_private;
-	pfs_sb = (struct pantryfs_super_block *)sb_bh->b_data;
 
-	// if empty
+	pfs_inode = (struct pantryfs_inode *)inode->i_private;
 	bh = sb_bread(dir->i_sb, le64_to_cpu(pfs_inode->data_block_number));
 	if (!bh)
 		return -ENOENT;
+
 	pfs_de = (struct pantryfs_dir_entry *)(bh->b_data);
 	for (cnt = 0; cnt < PFS_MAX_CHILDREN; cnt++) {
 		if ((pfs_de) && (pfs_de)->active == 1) {
@@ -662,40 +644,9 @@ int pantryfs_rmdir(struct inode *dir, struct dentry *dentry)
 		pfs_de++;
 	}
 
-	if (!pfs_parent)
-		return -ENOENT;
-	bh = sb_bread(dir->i_sb, le64_to_cpu(pfs_parent->data_block_number));
-	if (!bh)
-		return -ENOENT;
-	pfs_de = (struct pantryfs_dir_entry *)(bh->b_data);//start of pfs dentries
-	while (pfs_de && count < PFS_MAX_CHILDREN) {
-		if ((!strcmp(pfs_de->filename, name)) && (pfs_de->active == 1))
-			goto rmdir_out;
-		pfs_de++;
-		count++;
-	}
-	brelse(bh);
-	return -ENOENT;
-
-rmdir_out:
-	pfs_de->active = 0;
-	inode_dec_link_count(inode);
-	inode_dec_link_count(dir);
-
-	pantryfs_write_inode(inode, NULL);
-	mark_buffer_dirty(bh);
-	d_drop(dentry);
-
-	ino = inode->i_ino;
-	CLEARBIT(pfs_sb->free_data_blocks, pfs_inode->data_block_number - 2);
-	CLEARBIT(pfs_sb->free_inodes, ino - 1);
-	//memset(pfs_inode, 0, sizeof(struct pantryfs_inode));
-	//memset(bh, 0, PFS_BLOCK_SIZE);
-	mark_buffer_dirty(i_store_bh);
-	sync_dirty_buffer(i_store_bh);
-	mark_buffer_dirty(sb_bh);
-	sync_dirty_buffer(sb_bh);
-	brelse(bh);
+	drop_nlink(inode);
+	pantryfs_unlink(dir, dentry);
+	drop_nlink(dir);
 
 	return 0;
 
@@ -811,6 +762,7 @@ static struct dentry *pantryfs_mount(struct file_system_type *fs_type, int flags
 static void pantryfs_kill_superblock(struct super_block *sb)
 {
 	struct s_fs_info *info;
+
 	info = sb->s_fs_info;
 	brelse(((struct pantryfs_sb_buffer_heads *)sb->s_fs_info)->sb_bh);
 	brelse(((struct pantryfs_sb_buffer_heads *)sb->s_fs_info)->i_store_bh);
