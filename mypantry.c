@@ -874,6 +874,82 @@ int pantryfs_fill_super(struct super_block *sb, void *data, int silent)//what is
 	return 0;
 }
 
+struct pantryfs_dir_entry *search_pfs_dentry(struct buffer_head *par_bh,
+							struct dentry *vfs_dentry)
+{
+	struct pantryfs_dir_entry *tmp_pfs_dentry;
+	int cnt;
+	uint64_t new_ino = 0;
+	// struct *pantryfs_inode par_pfs_inode
+	// par_pfs_inode = (struct *pantryfs_inode)paretn->i_private;
+	// par_bh = sb_bread(parent->i_sb, par_pfs_inode->data_block_number);
+	tmp_pfs_dentry = (struct pantryfs_dir_entry *)(par_bh->b_data);
+	for (cnt = 0; cnt < PFS_MAX_CHILDREN; cnt++) {
+		if ((!tmp_pfs_dentry) || (tmp_pfs_dentry)->active == 0) {
+			//find an empty or deactive pfs dentry
+			tmp_pfs_dentry->inode_no = new_ino+1;
+			strncpy(tmp_pfs_dentry->filename, vfs_dentry->d_name.name,
+					sizeof(tmp_pfs_dentry->filename));
+			tmp_pfs_dentry->active = 1;
+			break;
+		}
+		tmp_pfs_dentry++;
+	}
+	if (cnt >= PFS_MAX_CHILDREN)
+		return NULL;
+	return tmp_pfs_dentry;
+}
+
+int pantryfs_rename(struct inode *old_parent, struct dentry *old_dentry, struct inode *new_parent,
+			struct dentry *new_dentry, unsigned int flags)
+{
+	struct inode *old_inode, *new_inode;
+	struct buffer_head *old_par_bh, *new_par_bh;
+	struct pantryfs_dir_entry *old_pfs_dentry, *new_pfs_dentry;
+	uint64_t old_ino;
+	int ret;
+	struct pantryfs_inode *old_par_pfs_inode, *new_par_pfs_inode;
+
+	if (flags & ~(RENAME_NOREPLACE|RENAME_EXCHANGE))
+		return -EINVAL;
+	old_par_bh = new_par_bh = NULL;
+	old_inode = d_inode(old_dentry);
+	if (!(S_IFREG & old_inode->i_mode))
+		return -EINVAL;
+	if (flags & RENAME_EXCHANGE) {
+		new_inode = new_dentry->d_inode;
+		if (!(S_IFREG & new_inode->i_mode))
+			return -EINVAL;
+		old_par_pfs_inode = (struct pantryfs_inode *)old_parent->i_private;
+		old_par_bh = sb_bread(old_parent->i_sb, old_par_pfs_inode->data_block_number);
+		new_par_pfs_inode = (struct pantryfs_inode *)new_parent->i_private;
+		new_par_bh = sb_bread(new_parent->i_sb, new_par_pfs_inode->data_block_number);
+		old_pfs_dentry = search_pfs_dentry(old_par_bh, old_dentry);
+		new_pfs_dentry = search_pfs_dentry(new_par_bh, new_dentry);
+		if ((old_pfs_dentry == NULL) || (new_pfs_dentry == NULL))
+			return -EINVAL;
+		new_dentry->d_inode = old_dentry->d_inode;
+		old_dentry->d_inode = new_inode;//change VFS inodes
+		old_ino = old_pfs_dentry->inode_no;
+		old_pfs_dentry->inode_no = new_pfs_dentry->inode_no;
+		new_pfs_dentry->inode_no = old_ino;
+
+		brelse(old_par_bh);
+		brelse(new_par_bh);
+		return 0;
+		//change PantryFS nodes
+	} else {
+		ret = pantryfs_link(old_dentry, new_parent, new_dentry);
+		if (ret < 0)
+			return ret;
+		ret = 0;
+		ret = pantryfs_unlink(old_parent, old_dentry);
+		return ret;
+		//create a hardlink with new inode and dentry
+		//delete the hardlink of old inode and dentry
+	}
+}
+
 static struct dentry *pantryfs_mount(struct file_system_type *fs_type, int flags,
 		const char *dev_name, void *data)
 {

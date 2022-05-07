@@ -8,6 +8,8 @@ int pantryfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode);
 int pantryfs_rmdir(struct inode *dir, struct dentry *dentry);
 int pantryfs_link(struct dentry *old_dentry, struct inode *dir, struct dentry *dentry);
 int pantryfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname);
+int pantryfs_rename(struct inode *old_inode, struct dentry *old_dentry,
+		struct inode *new_inode, struct dentry *new_dentry, unsigned int flags);
 const char *pantryfs_get_link(struct dentry *dentry, struct inode *inode,
 	struct delayed_call *done);
 
@@ -19,6 +21,7 @@ const struct inode_operations pantryfs_inode_ops = {
 	.rmdir = pantryfs_rmdir,
 	.link = pantryfs_link,
 	.symlink = pantryfs_symlink,
+	.rename = pantryfs_rename
 };
 
 const struct inode_operations pantryfs_symlink_inode_ops = {
