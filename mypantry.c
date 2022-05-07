@@ -273,7 +273,7 @@ int pantryfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 void pantryfs_evict_inode(struct inode *inode)
 {
 	struct pantryfs_inode *pfs_inode;
-	struct buffer_head *i_store_bh, *sb_bh;
+	struct buffer_head *i_store_bh, *sb_bh, *bh;
 	struct pantryfs_sb_buffer_heads *bhs;
 	unsigned long ino;
 	struct pantryfs_super_block *pfs_sb;
@@ -297,8 +297,10 @@ void pantryfs_evict_inode(struct inode *inode)
 	count = (int)inode->i_count.counter;
 	ino = inode->i_ino;
 	pfs_inode = (struct pantryfs_inode *)inode->i_private;
+	bh = sb_bread(inode->i_sb, pfs_inode->data_block_number);
 	CLEARBIT(pfs_sb->free_data_blocks, pfs_inode->data_block_number - 2);
 	CLEARBIT(pfs_sb->free_inodes, ino - 1);
+	memset(bh->b_data, 0, PFS_BLOCK_SIZE);
 	mark_buffer_dirty(i_store_bh);
 	sync_dirty_buffer(i_store_bh);
 	mark_buffer_dirty(sb_bh);
@@ -688,7 +690,7 @@ int pantryfs_symlink(struct inode *dir, struct dentry *dentry, const char *symna
 		inode_init_owner(inode, dir, S_IFLNK | 0777);
 		inode->i_sb = dir->i_sb;
 		inode->i_mtime = inode->i_atime = inode->i_ctime = ts;
-		inode->i_blocks = 8;//right?
+		inode->i_blocks = 0;//right?
 		inode->i_op = &pantryfs_symlink_inode_ops;
 		inode->i_ino = new_ino + 1;
 		inode->i_link = link;
