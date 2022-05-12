@@ -1,0 +1,625 @@
+[36m################### [35m(22-Flowers)[36m Pantry p0 ###################[39m
+[36m### Checking out hw8p9handin tag ###
+[m[36m
+### [A2] Check for binaries/artifacts ###
+[m[01;34m.[00m
+├── format_disk_as_pantryfs2.c
+├── format_disk_as_pantryfs.c
+├── .gitignore
+├── Makefile
+├── mypantry.c
+├── pantryfs_file.h
+├── pantryfs_file_ops.h
+├── pantryfs_inode.h
+├── pantryfs_inode_ops.h
+├── pantryfs_sb.h
+├── pantryfs_sb_ops.h
+├── README.txt
+├── [01;34mref[00m
+│   ├── pantry-arm.ko
+│   └── pantry-x86.ko
+├── [01;32mrun_checkpatch.sh[00m
+├── shellp1.sh
+└── [01;34mutil[00m
+    ├── [01;32mcheckpatch.pl[00m
+    ├── const_structs.checkpatch
+    └── spelling.txt
+
+2 directories, 19 files
+
+[A2]: n
+[36m
+### [A3] Checkpatch ###
+[mtotal: 0 errors, 0 warnings, 1300 lines checked
+
+Your patch has no obvious style problems and is ready for submission.
+
+NOTE: Ignored message types: AVOID_EXTERNS ENOSYS EXPORT_SYMBOL FILE_PATH_CHANGES LINE_CONTINUATIONS MISSING_EOF_NEWLINE SPDX_LICENSE_TAG TRAILING_SEMICOLON
+
+[A3]: n
+[36m### Cleaning up ###
+[mYour branch is up to date with 'origin/master'.
+[36m################### [35m(22-Flowers)[36m Pantry p0 ###################[39m
+[36m################### [35m(22-Flowers)[36m Pantry p1 ###################[39m
+[36m### Checking out hw8p1handin tag ###
+(B[mmake: Entering directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.o
+  MODPOST /local/indigo/t4118/.grade/hw8/hw8/Module.symvers
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.mod.o
+  LD [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.ko
+make: Leaving directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+[36m### Testing for code B1 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [B1] **********
+INFO:root:[B1.1,PASS] +  3 | members directory was created
+INFO:root:[B1.2,PASS] +  3 | members directory has nlink 2
+INFO:root:[B1] Total: =  6
+INFO:root:B1 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] pantryfs superblock destroyed. Unmount successful.
+[  +0.039983] Successfully unregistered pantryfs
+[  +0.031332] Successfully registered mypantryfs
+
+[36m### Testing for code B2 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [B2] **********
+INFO:root:[B2.1,PASS] +  4 | names.txt created with nlink 1
+INFO:root:[B2.2,PASS] +  4 | names.txt has text with no garbage bytes
+INFO:root:[B2] Total: =  8
+INFO:root:B2 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] pantryfs superblock destroyed. Unmount successful.
+[  +0.047982] Successfully unregistered pantryfs
+[  +0.021943] Successfully registered mypantryfs
+
+[36m### Testing for code B3 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [B3] **********
+INFO:root:[B3,PASS] +  6 | root directory has nlink 3
+INFO:root:[B3] Total: =  6
+INFO:root:B3 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] pantryfs superblock destroyed. Unmount successful.
+[  +0.051972] Successfully unregistered pantryfs
+[  +0.031075] Successfully registered mypantryfs
+
+[36m################### [35m(22-Flowers)[36m Pantry p2 ###################[39m
+[36m### Checking out hw8p2handin tag ###
+(B[mmake: Entering directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.o
+  MODPOST /local/indigo/t4118/.grade/hw8/hw8/Module.symvers
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.mod.o
+  LD [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.ko
+make: Leaving directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+[36m### Testing for code C1 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [C1] **********
+INFO:root:[C1,PASS] + 15 | Mount returned exit code 0
+INFO:root:[C1] Total: = 15
+INFO:root:C1 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m################### [35m(22-Flowers)[36m Pantry p3 ###################[39m
+[36m### Checking out hw8p3handin tag ###
+(B[mmake: Entering directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.o
+  MODPOST /local/indigo/t4118/.grade/hw8/hw8/Module.symvers
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.mod.o
+  LD [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.ko
+make: Leaving directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+[36m### Testing for code D1 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [D1] **********
+INFO:root:[D1.1,PASS] + 15 | Directory listing shows 'hello.txt' and 'members'
+INFO:root:[D1.2,PASS] + 10 | Directory listing has '.' and '..'
+INFO:root:[D1] Total: = 25
+INFO:root:D1 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m################### [35m(22-Flowers)[36m Pantry p4 ###################[39m
+[36m### Checking out hw8p4handin tag ###
+(B[mmake: Entering directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.o
+  MODPOST /local/indigo/t4118/.grade/hw8/hw8/Module.symvers
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.mod.o
+  LD [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.ko
+make: Leaving directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+[36m### Testing for code E1 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [E1] **********
+INFO:root:[E1,PASS] +  8 | 'names.txt' found in 'members' directory
+INFO:root:[E1] Total: =  8
+INFO:root:E1 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code E2 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [E2] **********
+INFO:root:[E2,PASS] +  3 | stat executed successfully
+INFO:root:[E2] Total: =  3
+INFO:root:E2 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code E3 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [E3] **********
+INFO:root:[E3,PASS] +  3 | stat fails for nonexistent file
+INFO:root:[E3] Total: =  3
+INFO:root:E3 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code E4 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [E4] **********
+INFO:root:[E4.1,PASS] +  3 | chdir to 'members' works
+INFO:root:[E4.2,PASS] +  3 | umount correctly fails when cwd is 'members'
+INFO:root:[E4] Total: =  6
+INFO:root:E4 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m################### [35m(22-Flowers)[36m Pantry p5 ###################[39m
+[36m### Checking out hw8p5handin tag ###
+(B[mmake: Entering directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.o
+  MODPOST /local/indigo/t4118/.grade/hw8/hw8/Module.symvers
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.mod.o
+  LD [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.ko
+make: Leaving directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+[36m### Testing for code F1 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [F1] **********
+INFO:root:[F1,PASS] +  3 | Contents of 'hello.txt' are correct
+INFO:root:[F1] Total: =  3
+INFO:root:F1 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code F2 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [F2] **********
+INFO:root:[F2.1,PASS] +  3 | names.txt opened successfully
+INFO:root:[F2.2,PASS] +  2 | Contents of 'names.txt' extracted correctly in multiple reads
+INFO:root:[F2.3,PASS] +  2 | umount correctly fails when there are open files
+INFO:root:[F2] Total: =  7
+INFO:root:F2 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m################### [35m(22-Flowers)[36m Pantry p6 ###################[39m
+[36m### Checking out hw8p6handin tag ###
+(B[mmake: Entering directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.o
+  MODPOST /local/indigo/t4118/.grade/hw8/hw8/Module.symvers
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.mod.o
+  LD [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.ko
+make: Leaving directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+[36m### Testing for code G1 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [G1] **********
+INFO:root:[G1.1,PASS] +  2 | mtime of 'hello.txt' is correctly read off disk
+INFO:root:[G1.2,PASS] +  2 | link count of pantryfs root is correct (nlink == 3)
+INFO:root:[G1.3,PASS] +  2 | size of 'names.txt' reported correctly
+INFO:root:[G1.4,PASS] +  4 | listing shows 'hello.txt' and 'members' with antagonistic image
+INFO:root:[G1] Total: = 10
+INFO:root:G1 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+[  +0.072873] Mounted mypantryfs on [/dev/loop0]
+[  +0.035075] mypantryfs superblock destroyed. Unmount successful.
+
+[36m################### [35m(22-Flowers)[36m Pantry p7 ###################[39m
+[36m### Checking out hw8p7handin tag ###
+(B[mmake: Entering directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.o
+  MODPOST /local/indigo/t4118/.grade/hw8/hw8/Module.symvers
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.mod.o
+  LD [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.ko
+make: Leaving directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+[36m### Testing for code H1 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [H1] **********
+INFO:root:[H1.1,FAIL] +  0 | Write succeeded and new contents read successfully
+INFO:root:[H1.2,FAIL] +  0 | File size doesn't change after short write
+INFO:root:[H1.3,FAIL] +  0 | Updated contents read successfully
+INFO:root:[H1.4,PASS] +  4 | File size increased after long write
+INFO:root:[H1] Total: =  4
+INFO:root:H1 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code H2 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [H2] **********
+INFO:root:[H2.1,PASS] +  3 | O_TRUNC makes file size 0
+INFO:root:[H2.2,PASS] +  3 | Truncation correctly overwrote file
+INFO:root:[H2.3,PASS] +  4 | Updated contents persist
+INFO:root:[H2] Total: = 10
+INFO:root:H2 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+[  +0.020469] Mounted mypantryfs on [/dev/loop0]
+[  +0.043527] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code H3 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [H3] **********
+INFO:root:[H3,PASS] +  4 | Handles writes exceeding PFS_BLOCK_SIZE
+INFO:root:[H3] Total: =  4
+INFO:root:H3 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m################### [35m(22-Flowers)[36m Pantry p8 ###################[39m
+[36m### Checking out hw8p8handin tag ###
+(B[mmake: Entering directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.o
+  MODPOST /local/indigo/t4118/.grade/hw8/hw8/Module.symvers
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.mod.o
+  LD [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.ko
+make: Leaving directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+[36m### Testing for code I1 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [I1] **********
+INFO:root:[I1,PASS] +  3 | 'new.txt' successfully opened with O_CREAT
+INFO:root:[I1] Total: =  3
+INFO:root:I1 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code I2 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [I2] **********
+INFO:root:[I2,PASS] +  5 | Directory listing shows 'hello.txt', 'members', and 'new.txt'
+INFO:root:[I2] Total: =  5
+INFO:root:I2 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code I3 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [I3] **********
+INFO:root:[I3,PASS] +  4 | New file has correct nlink, size, and mode (is a regular file)
+INFO:root:[I3] Total: =  4
+INFO:root:I3 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code I4 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [I4] **********
+INFO:root:[I4,PASS] +  7 | New file can be written to and read from
+INFO:root:[I4] Total: =  7
+INFO:root:I4 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code I5 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [I5] **********
+INFO:root:[I5,PASS] +  6 | Directory listing for 'new.txt' persists
+INFO:root:[I5] Total: =  6
+INFO:root:I5 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+[  +0.016164] Mounted mypantryfs on [/dev/loop0]
+[  +0.031836] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code I6 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [I6] **********
+INFO:root:[I6.1,FAIL] +  0 | 13 more files successfully created
+INFO:root:[I6.2,PASS] +  4 | Filesystem reaches capacity after 16 files
+[33m[ I6 timed out ]
+(B[m[36m################### [35m(22-Flowers)[36m Pantry p9 ###################[39m
+[36m### Checking out hw8p9handin tag ###
+(B[mmake: Entering directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.o
+  MODPOST /local/indigo/t4118/.grade/hw8/hw8/Module.symvers
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.mod.o
+  LD [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.ko
+make: Leaving directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+[36m### Testing for code J1 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [J1] **********
+INFO:root:[J1.1,PASS] +  6 | 'hello.txt' deleted successfully
+INFO:root:[J1.2,PASS] +  6 | 'hello.txt' deletion persists after remount.
+INFO:root:[J1] Total: = 12
+INFO:root:J1 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+[  +0.015331] Mounted mypantryfs on [/dev/loop0]
+[  +0.028700] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code J2 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [J2] **********
+INFO:root:[J2,FAIL] +  0 | 14 files created and deleted (20 times)
+[33m[ J2 timed out ]
+(B[m[36m### Testing for code J3 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [J3] **********
+INFO:root:[J3.1,PASS] +  6 | File that is still opened can be removed
+INFO:root:[J3.2,PASS] +  5 | File that is still opened can be read/written to after removal
+INFO:root:[J3.3,PASS] +  3 | File that is still opened can be removed (test 2)
+INFO:root:[J3.4,PASS] +  3 | File that is still opened can be read/written to (test 2)
+INFO:root:[J3] Total: = 17
+INFO:root:J3 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+[  +0.012443] Mounted mypantryfs on [/dev/loop0]
+[  +0.047593] mypantryfs superblock destroyed. Unmount successful.
+
+[36m################### [35m(22-Flowers)[36m Pantry p10 ###################[39m
+[36m### Checking out hw8p10handin tag ###
+(B[mmake: Entering directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.o
+  MODPOST /local/indigo/t4118/.grade/hw8/hw8/Module.symvers
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.mod.o
+  LD [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.ko
+make: Leaving directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+[36m### Testing for code K1 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [K1] **********
+INFO:root:[K1,PASS] +  4 | 'newdir' successfully created, shows up in directory listing
+INFO:root:[K1] Total: =  4
+INFO:root:K1 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code K2 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [K2] **********
+INFO:root:[K2,PASS] +  3 | Root dir has correct nlink after 'newdir' is created
+INFO:root:[K2] Total: =  3
+INFO:root:K2 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code K3 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [K3] **********
+INFO:root:[K3,PASS] +  3 | 'newdir' has correct nlink, size, and mode (is a directory)
+INFO:root:[K3] Total: =  3
+INFO:root:K3 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: SOME ***
+INFO:root:******************END******************
+[Feb 2 16:02] ------------[ cut here ]------------
+[  +0.000007] WARNING: CPU: 1 PID: 8 at fs/buffer.c:3141 __sync_dirty_buffer+0x109/0x130
+[  +0.000001] Modules linked in: loop mypantry(OE) intel_rapl_msr intel_rapl_common ghash_clmulni_intel aesni_intel libaes crypto_simd cryptd glue_helper joydev pcspkr evdev virtio_balloon serio_raw virtio_console qemu_fw_cfg button drm fuse configfs virtio_rng rng_core ip_tables x_tables autofs4 ext4 crc16 mbcache jbd2 crc32c_generic virtio_net net_failover virtio_blk failover ata_generic crct10dif_pclmul crct10dif_common crc32_pclmul crc32c_intel ata_piix psmouse libata uhci_hcd ehci_pci ehci_hcd scsi_mod usbcore i2c_piix4 usb_common virtio_pci floppy virtio_ring virtio
+[  +0.000036] CPU: 1 PID: 8 Comm: kworker/u8:0 Tainted: G           OE     5.10.0-8-amd64 #1 Debian 5.10.46-4
+[  +0.000001] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.10.2-1ubuntu1 04/01/2014
+[  +0.000006] Workqueue: writeback wb_workfn (flush-7:0)
+[  +0.000006] RIP: 0010:__sync_dirty_buffer+0x109/0x130
+[  +0.000002] Code: 48 0f ba 6d 00 02 0f 83 40 ff ff ff b9 02 00 00 00 48 c7 c2 30 bc 6b ba be 02 00 00 00 48 89 ef e8 3c 48 5b 00 e9 22 ff ff ff <0f> 0b e9 09 ff ff ff f0 80 65 00 fb be 02 00 00 00 48 89 ef 41 bc
+[  +0.000001] RSP: 0018:ffffb483c004bc30 EFLAGS: 00010246
+[  +0.000001] RAX: 0000000000000000 RBX: ffff8fe0c4a316d8 RCX: 0000000000000000
+[  +0.000001] RDX: ffffdd54c0648e87 RSI: 0000000000000800 RDI: ffff8fe0c4392b60
+[  +0.000001] RBP: ffff8fe0c4392b60 R08: 000000005aec0d5d R09: 000000001f7b178b
+[  +0.000000] R10: ffffffffffffffff R11: 0000000000000018 R12: 0000000000000800
+[  +0.000001] R13: 0000000000000000 R14: ffff8fe0c4a315e8 R15: 7fffffffffffffff
+[  +0.000001] FS:  0000000000000000(0000) GS:ffff8fe13dc80000(0000) knlGS:0000000000000000
+[  +0.000001] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[  +0.000001] CR2: 0000556c7ecb2e10 CR3: 0000000003170000 CR4: 00000000001506e0
+[  +0.000003] Call Trace:
+[  +0.000014]  pantryfs_write_inode+0x83/0x90 [mypantry]
+[  +0.000002]  __writeback_single_inode+0x224/0x2a0
+[  +0.000002]  writeback_sb_inodes+0x200/0x470
+[  +0.000002]  wb_writeback+0xbb/0x290
+[  +0.000002]  wb_workfn+0xd5/0x4d0
+[  +0.000003]  ? sched_clock_cpu+0xc/0xa0
+[  +0.000002]  ? __smp_call_single_queue+0x23/0x40
+[  +0.000003]  ? x2apic_send_IPI+0x49/0x50
+[  +0.000003]  ? ttwu_queue_wakelist+0xa7/0xc0
+[  +0.000001]  ? try_to_wake_up+0x321/0x4f0
+[  +0.000004]  process_one_work+0x1b6/0x350
+[  +0.000001]  worker_thread+0x53/0x3e0
+[  +0.000002]  ? process_one_work+0x350/0x350
+[  +0.000001]  kthread+0x11b/0x140
+[  +0.000002]  ? __kthread_bind_mask+0x60/0x60
+[  +0.000002]  ret_from_fork+0x22/0x30
+[  +0.000002] ---[ end trace 39524611f5b9b46f ]---
+[  +0.016322] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code K4 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [K4] **********
+INFO:root:[K4,PASS] +  2 | Directory listing of 'newdir' is empty upon creation
+INFO:root:[K4] Total: =  2
+INFO:root:K4 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code K5 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [K5] **********
+INFO:root:[K5.1,PASS] +  2 | 'new.txt' and 'newsubdir' successfully created in 'newdir'
+INFO:root:[K5.2,PASS] +  4 | 'newsubdir' successfully removed in 'newdir'
+INFO:root:[K5.3,PASS] +  2 | 'newdir' has correct nlink after 'newsubdir' is removed
+INFO:root:[K5] Total: =  8
+INFO:root:K5 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code K6 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [K6] **********
+INFO:root:[K6,PASS] +  2 | ENOTEMPTY for rmdir on 'newdir'
+INFO:root:[K6] Total: =  2
+INFO:root:K6 probably ran cleanly (check dmesg too)
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[36m################### [35m(22-Flowers)[36m Pantry p11 ###################[39m
+[36m### Checking out hw8p11handin tag ###
+(B[mmake: Entering directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.o
+  MODPOST /local/indigo/t4118/.grade/hw8/hw8/Module.symvers
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.mod.o
+  LD [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.ko
+make: Leaving directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+[36m### Testing for code L1 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [L1] **********
+INFO:root:[L1.1,PASS] +  1 | Hard link 'hello2.txt' for 'hello.txt' successfully created
+INFO:root:[L1.2,PASS] +  3 | 'hello2.txt' and 'hello.txt' share the same inode number
+INFO:root:[L1.3,PASS] +  3 | 'hello.txt''s link count increased by one
+INFO:root:[L1.4,PASS] +  3 | Deleting hard link decreases 'hello.txt''s link count by one
+INFO:root:[L1] Total: = 10
+INFO:root:L1 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m################### [35m(22-Flowers)[36m Pantry p12 ###################[39m
+[36m### Checking out hw8p12handin tag ###
+(B[mmake: Entering directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.o
+  MODPOST /local/indigo/t4118/.grade/hw8/hw8/Module.symvers
+  CC [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.mod.o
+  LD [M]  /local/indigo/t4118/.grade/hw8/hw8/mypantry.ko
+make: Leaving directory '/local/indigo/t4118/.local/usr/src/linux-headers-5.10.0-8-amd64'
+[36m### Testing for code M1 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [M1] **********
+INFO:root:[M1,PASS] +  4 | Symlink 'symhello' for ‘hello.txt’ successfully created
+INFO:root:[M1] Total: =  4
+INFO:root:M1 probably ran cleanly (check dmesg too)
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[36m### Testing for code M2 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [M2] **********
+INFO:root:[M2,PASS] +  4 | 'symhello' has correct nlink, size, and mode (S_IFLNK)
+INFO:root:[M2] Total: =  4
+INFO:root:M2 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code M3 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [M3] **********
+INFO:root:[M3,PASS] +  5 | Contents of 'symhello' are correct (same as 'hello.txt')
+INFO:root:[M3] Total: =  5
+INFO:root:M3 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+
+[36m### Testing for code M4 ###
+(B[mrmmod: ERROR: Module pantry is not currently loaded
+rmmod: ERROR: Module mypantry is not currently loaded
+rmmod: ERROR: Module mypantryfs is not currently loaded
+INFO:root:********** Testing Code [M4] **********
+INFO:root:[M4.1,PASS] +  4 | Successfully unlinks ‘symhello’
+INFO:root:[M4.2,PASS] +  3 | Can still read ‘hello.txt’ and the content is correct
+INFO:root:[M4] Total: =  7
+INFO:root:M4 probably ran cleanly (check dmesg too)
+INFO:root:*** DMESG: NONE ***
+INFO:root:******************END******************
+[Feb 2 16:02] mypantryfs superblock destroyed. Unmount successful.
+[  +0.043954] Successfully unregistered mypantryfs
+
